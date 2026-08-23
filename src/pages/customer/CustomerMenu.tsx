@@ -24,6 +24,7 @@ import {
 import type { MenuItem } from "../../config/supabase";
 import { formatCurrency, isValidPhone } from "../../utils/helpers";
 import { supabase } from "../../config/supabase";
+import { type Language, t } from "../../i18n/translations";
 
 interface CartItem extends MenuItem {
   quantity: number;
@@ -32,8 +33,29 @@ interface CartItem extends MenuItem {
   itemTotal: number;
 }
 
+const LANGUAGES: { code: Language; label: string }[] = [
+  { code: "th", label: "ไทย" },
+  { code: "en", label: "EN" },
+  { code: "zh", label: "中文" },
+];
+
+const getItemName = (item: MenuItem, lang: Language): string => {
+  if (lang === "en" && item.name_en) return item.name_en;
+  if (lang === "zh" && item.name_zh) return item.name_zh;
+  return item.name;
+};
+
+const getItemDesc = (item: MenuItem, lang: Language): string | undefined => {
+  if (lang === "en" && item.description_en) return item.description_en;
+  if (lang === "zh" && item.description_zh) return item.description_zh;
+  return item.description;
+};
+
 const CustomerMenu: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
+  const [lang, setLang] = useState<Language>(
+    () => (localStorage.getItem("menu_lang") as Language) || "th"
+  );
   const [restaurant, setRestaurant] = useState<any>(null);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -45,7 +67,11 @@ const CustomerMenu: React.FC = () => {
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [showItemModal, setShowItemModal] = useState(false);
 
-  // Load restaurant and menu
+  const changeLang = (l: Language) => {
+    setLang(l);
+    localStorage.setItem("menu_lang", l);
+  };
+
   useEffect(() => {
     loadRestaurant();
   }, [slug]);
@@ -56,16 +82,12 @@ const CustomerMenu: React.FC = () => {
         setMenuItems(data);
         setLoading(false);
       });
-
-      return () => {
-        subscription.unsubscribe();
-      };
+      return () => { subscription.unsubscribe(); };
     }
   }, [restaurant]);
 
   const loadRestaurant = async () => {
     if (!slug) return;
-
     const { data, error } = await supabase
       .from("restaurants")
       .select("*")
@@ -74,11 +96,9 @@ const CustomerMenu: React.FC = () => {
       .single();
 
     if (error || !data) {
-      console.error("Restaurant not found");
       setLoading(false);
       return;
     }
-
     setRestaurant(data);
   };
 
@@ -88,33 +108,19 @@ const CustomerMenu: React.FC = () => {
   ];
 
   const filteredItems = menuItems.filter((item) => {
-    const matchesSearch = item.name
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
+    const name = getItemName(item, lang).toLowerCase();
+    const matchesSearch = name.includes(searchTerm.toLowerCase());
     const matchesCategory =
       categoryFilter === "all" || item.category === categoryFilter;
     return matchesSearch && matchesCategory && item.is_available;
   });
 
-  const addToCart = (
-    item: MenuItem,
-    selectedSize?: any,
-    selectedAddons: any[] = []
-  ) => {
+  const addToCart = (item: MenuItem, selectedSize?: any, selectedAddons: any[] = []) => {
     const basePrice = selectedSize ? selectedSize.price : item.base_price;
-    const addonsTotal = selectedAddons.reduce(
-      (sum, addon) => sum + addon.price,
-      0
-    );
+    const addonsTotal = selectedAddons.reduce((sum, addon) => sum + addon.price, 0);
     const itemTotal = basePrice + addonsTotal;
 
-    const cartItem: CartItem = {
-      ...item,
-      quantity: 1,
-      selectedSize,
-      selectedAddons,
-      itemTotal,
-    };
+    const cartItem: CartItem = { ...item, quantity: 1, selectedSize, selectedAddons, itemTotal };
 
     const existingIndex = cart.findIndex(
       (ci) =>
@@ -130,16 +136,13 @@ const CustomerMenu: React.FC = () => {
     } else {
       setCart([...cart, cartItem]);
     }
-
     setShowItemModal(false);
   };
 
   const updateQuantity = (index: number, delta: number) => {
     const newCart = [...cart];
     newCart[index].quantity += delta;
-    if (newCart[index].quantity <= 0) {
-      newCart.splice(index, 1);
-    }
+    if (newCart[index].quantity <= 0) newCart.splice(index, 1);
     setCart(newCart);
   };
 
@@ -152,7 +155,7 @@ const CustomerMenu: React.FC = () => {
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   const handleItemClick = (item: MenuItem) => {
-    if (item.sizes && item.sizes.length > 0) {
+    if ((item.sizes && item.sizes.length > 0) || (item.addons && item.addons.length > 0)) {
       setSelectedItem(item);
       setShowItemModal(true);
     } else {
@@ -160,74 +163,71 @@ const CustomerMenu: React.FC = () => {
     }
   };
 
-  if (loading) {
-    return <Loading text="Loading menu..." />;
-  }
+  const handleRemoveItem = (itemId: string) => {
+    const index = cart.findIndex((ci) => ci.id === itemId);
+    if (index >= 0) updateQuantity(index, -1);
+  };
+
+  const getItemQuantity = (itemId: string) =>
+    cart.reduce((sum, ci) => (ci.id === itemId ? sum + ci.quantity : sum), 0);
+
+  if (loading) return <Loading text="Loading menu..." />;
 
   if (!restaurant) {
     return (
       <div className="min-h-screen bg-bg-subtle flex items-center justify-center">
         <Card className="text-center p-8">
           <Package className="w-16 h-16 text-text-secondary mx-auto mb-4 opacity-50" />
-          <h2 className="text-2xl font-bold text-text mb-2">
-            Restaurant Not Found
-          </h2>
-          <p className="text-text-secondary">
-            The restaurant you're looking for doesn't exist or is currently
-            inactive.
-          </p>
+          <h2 className="text-2xl font-bold text-text mb-2">{t(lang, "restaurantNotFound")}</h2>
+          <p className="text-text-secondary">{t(lang, "restaurantNotFoundDesc")}</p>
         </Card>
       </div>
     );
   }
-
-  const getItemQuantity = (itemId: string) => {
-    return cart.reduce((sum, cartItem) => {
-      if (cartItem.id === itemId) {
-        return sum + cartItem.quantity;
-      }
-      return sum;
-    }, 0);
-  };
-
-  const handleAddSimple = (item: MenuItem) => {
-    addToCart(item);
-  };
-
-  const handleRemoveItem = (itemId: string) => {
-    const index = cart.findIndex((ci) => ci.id === itemId);
-    if (index >= 0) {
-      updateQuantity(index, -1);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header */}
       <div className="bg-white shadow-sm sticky top-0 z-40">
         <div className="max-w-screen-lg mx-auto px-4 py-3">
-          <div className="flex items-center gap-3 mb-3">
-            {restaurant.logo_url && (
-              <img
-                src={restaurant.logo_url}
-                alt={restaurant.name}
-                className="w-12 h-12 rounded-lg object-cover"
-              />
-            )}
-            <div>
-              <h1 className="font-bold text-lg text-gray-800">
-                {restaurant.name}
-              </h1>
-              <p className="text-xs text-gray-500">
-                {restaurant.restaurant_type}
-              </p>
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div className="flex items-center gap-3">
+              {restaurant.logo_url && (
+                <img
+                  src={restaurant.logo_url}
+                  alt={restaurant.name}
+                  className="w-12 h-12 rounded-lg object-cover"
+                />
+              )}
+              <div>
+                <h1 className="font-bold text-lg text-gray-800">{restaurant.name}</h1>
+                <p className="text-xs text-gray-500">{restaurant.restaurant_type}</p>
+              </div>
+            </div>
+
+            {/* Language Switcher */}
+            <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden shrink-0">
+              {LANGUAGES.map((l) => (
+                <button
+                  key={l.code}
+                  onClick={() => changeLang(l.code)}
+                  className={`px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                    lang === l.code
+                      ? "bg-accent text-white"
+                      : "text-gray-600 hover:bg-gray-50"
+                  }`}
+                >
+                  {l.label}
+                </button>
+              ))}
             </div>
           </div>
+
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
-              placeholder="Search for dishes"
+              placeholder={t(lang, "searchPlaceholder")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent/20"
@@ -237,7 +237,7 @@ const CustomerMenu: React.FC = () => {
       </div>
 
       {/* Category Tabs */}
-      <div className="bg-white border-b sticky top-[108px] z-30">
+      <div className="bg-white border-b sticky top-[116px] z-30">
         <div className="max-w-screen-lg mx-auto px-4">
           <div className="flex gap-2 overflow-x-auto py-2 scrollbar-hide">
             {categories.map((category) => (
@@ -250,7 +250,7 @@ const CustomerMenu: React.FC = () => {
                     : "bg-gray-100 text-gray-600"
                 }`}
               >
-                {category === "all" ? "All" : category}
+                {category === "all" ? t(lang, "allCategory") : category}
               </button>
             ))}
           </div>
@@ -261,7 +261,7 @@ const CustomerMenu: React.FC = () => {
       <div className="max-w-screen-lg mx-auto px-4 py-4">
         {filteredItems.length === 0 ? (
           <div className="text-center py-20">
-            <p className="text-gray-400 text-sm">No items found</p>
+            <p className="text-gray-400 text-sm">{t(lang, "noItems")}</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3">
@@ -272,17 +272,10 @@ const CustomerMenu: React.FC = () => {
                 (item.addons && item.addons.length > 0);
 
               return (
-                <div
-                  key={item.id}
-                  className="bg-white rounded-xl overflow-hidden shadow-sm"
-                >
+                <div key={item.id} className="bg-white rounded-xl overflow-hidden shadow-sm">
                   <div className="relative h-36">
                     {item.image_url ? (
-                      <img
-                        src={item.image_url}
-                        alt={item.name}
-                        className="w-full h-full object-cover"
-                      />
+                      <img src={item.image_url} alt={getItemName(item, lang)} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full bg-gray-100 flex items-center justify-center">
                         <Package className="w-10 h-10 text-gray-300" />
@@ -291,7 +284,7 @@ const CustomerMenu: React.FC = () => {
                     {!item.is_available && (
                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                         <span className="bg-black/80 text-white text-xs px-2 py-1 rounded">
-                          Not Available
+                          {t(lang, "notAvailable")}
                         </span>
                       </div>
                     )}
@@ -299,50 +292,31 @@ const CustomerMenu: React.FC = () => {
 
                   <div className="p-3">
                     <h3 className="font-semibold text-sm text-gray-800 mb-1 line-clamp-2 h-10">
-                      {item.name}
+                      {getItemName(item, lang)}
                     </h3>
-
                     <div className="flex items-end justify-between mt-2">
-                      <div>
-                        <p className="font-bold text-gray-800">
-                          {item.sizes && item.sizes.length > 0
-                            ? formatCurrency(
-                                Math.min(...item.sizes.map((s) => s.price))
-                              )
-                            : formatCurrency(item.base_price)}
-                        </p>
-                      </div>
-
+                      <p className="font-bold text-gray-800">
+                        {item.sizes && item.sizes.length > 0
+                          ? formatCurrency(Math.min(...item.sizes.map((s) => s.price)))
+                          : formatCurrency(item.base_price)}
+                      </p>
                       {item.is_available && (
                         <div className="flex-shrink-0">
                           {quantity === 0 ? (
                             <button
-                              onClick={() =>
-                                hasVariations
-                                  ? handleItemClick(item)
-                                  : handleAddSimple(item)
-                              }
+                              onClick={() => hasVariations ? handleItemClick(item) : addToCart(item)}
                               className="px-5 py-1.5 border-2 border-accent text-accent font-bold text-xs rounded-md hover:shadow-md transition-shadow"
                             >
-                              ADD
+                              {t(lang, "add")}
                             </button>
                           ) : (
                             <div className="flex items-center bg-accent text-white rounded-md">
-                              <button
-                                onClick={() => handleRemoveItem(item.id)}
-                                className="px-2 py-1 hover:bg-accent-hover rounded-l-md"
-                              >
+                              <button onClick={() => handleRemoveItem(item.id)} className="px-2 py-1 hover:bg-accent-hover rounded-l-md">
                                 <Minus className="w-3.5 h-3.5" />
                               </button>
-                              <span className="px-3 font-bold text-sm">
-                                {quantity}
-                              </span>
+                              <span className="px-3 font-bold text-sm">{quantity}</span>
                               <button
-                                onClick={() =>
-                                  hasVariations
-                                    ? handleItemClick(item)
-                                    : handleAddSimple(item)
-                                }
+                                onClick={() => hasVariations ? handleItemClick(item) : addToCart(item)}
                                 className="px-2 py-1 hover:bg-accent-hover rounded-r-md"
                               >
                                 <Plus className="w-3.5 h-3.5" />
@@ -360,40 +334,37 @@ const CustomerMenu: React.FC = () => {
         )}
       </div>
 
-      {/* Cart Modal */}
       <CartModal
         isOpen={showCart}
         cart={cart}
+        lang={lang}
         onClose={() => setShowCart(false)}
         onUpdateQuantity={updateQuantity}
         onRemove={removeFromCart}
-        onCheckout={() => {
-          setShowCart(false);
-          setShowCheckout(true);
-        }}
+        onCheckout={() => { setShowCart(false); setShowCheckout(true); }}
+        getItemName={getItemName}
       />
 
-      {/* Item Customization Modal */}
       <ItemCustomizationModal
         isOpen={showItemModal}
         item={selectedItem}
+        lang={lang}
         onClose={() => setShowItemModal(false)}
         onAdd={addToCart}
+        getItemName={getItemName}
+        getItemDesc={getItemDesc}
       />
 
-      {/* Checkout Modal */}
       <CheckoutModal
         isOpen={showCheckout}
         cart={cart}
         restaurantId={restaurant.id}
+        lang={lang}
         onClose={() => setShowCheckout(false)}
-        onSuccess={() => {
-          setCart([]);
-          setShowCheckout(false);
-        }}
+        onSuccess={() => { setCart([]); setShowCheckout(false); }}
+        getItemName={getItemName}
       />
 
-      {/* Bottom Cart Bar */}
       {cartCount > 0 && (
         <div className="fixed bottom-0 left-0 right-0 bg-accent text-white shadow-[0_-2px_20px_rgba(0,0,0,0.15)] z-40">
           <button
@@ -405,16 +376,11 @@ const CustomerMenu: React.FC = () => {
                 {cartCount}
               </div>
               <span className="font-bold text-base">
-                {formatCurrency(
-                  cart.reduce(
-                    (sum, item) => sum + item.itemTotal * item.quantity,
-                    0
-                  )
-                )}
+                {formatCurrency(cart.reduce((sum, item) => sum + item.itemTotal * item.quantity, 0))}
               </span>
             </div>
             <div className="flex items-center gap-2 font-semibold text-sm">
-              <span>View Cart</span>
+              <span>{t(lang, "viewCart")}</span>
               <span className="text-lg">›</span>
             </div>
           </button>
@@ -424,97 +390,65 @@ const CustomerMenu: React.FC = () => {
   );
 };
 
-// Cart Modal Component
+// Cart Modal
 interface CartModalProps {
   isOpen: boolean;
   cart: CartItem[];
+  lang: Language;
   onClose: () => void;
   onUpdateQuantity: (index: number, delta: number) => void;
   onRemove: (index: number) => void;
   onCheckout: () => void;
+  getItemName: (item: MenuItem, lang: Language) => string;
 }
 
-const CartModal: React.FC<CartModalProps> = ({
-  isOpen,
-  cart,
-  onClose,
-  onUpdateQuantity,
-  onRemove,
-  onCheckout,
-}) => {
-  const total = cart.reduce(
-    (sum, item) => sum + item.itemTotal * item.quantity,
-    0
-  );
+const CartModal: React.FC<CartModalProps> = ({ isOpen, cart, lang, onClose, onUpdateQuantity, onRemove, onCheckout, getItemName }) => {
+  const total = cart.reduce((sum, item) => sum + item.itemTotal * item.quantity, 0);
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Your Cart" size="lg">
+    <Modal isOpen={isOpen} onClose={onClose} title={t(lang, "yourCart")} size="lg">
       <div className="space-y-6">
         {cart.length === 0 ? (
           <div className="text-center py-8">
             <ShoppingCart className="w-16 h-16 text-text-secondary mx-auto mb-4 opacity-50" />
-            <p className="text-text-secondary">Your cart is empty</p>
+            <p className="text-text-secondary">{t(lang, "cartEmpty")}</p>
           </div>
         ) : (
           <>
             <div className="space-y-4 max-h-96 overflow-y-auto">
               {cart.map((item, index) => (
-                <div
-                  key={index}
-                  className="flex items-start space-x-4 p-4 bg-bg-subtle rounded-lg"
-                >
+                <div key={index} className="flex items-start space-x-4 p-4 bg-bg-subtle rounded-lg">
                   <div className="flex-1">
-                    <h4 className="font-semibold text-text">{item.name}</h4>
+                    <h4 className="font-semibold text-text">{getItemName(item, lang)}</h4>
                     {item.selectedSize && (
-                      <p className="text-sm text-text-secondary">
-                        Size: {item.selectedSize.name}
-                      </p>
+                      <p className="text-sm text-text-secondary">{t(lang, "size")} {item.selectedSize.name}</p>
                     )}
                     {item.selectedAddons.length > 0 && (
-                      <p className="text-sm text-text-secondary">
-                        Add-ons:{" "}
-                        {item.selectedAddons.map((a) => a.name).join(", ")}
-                      </p>
+                      <p className="text-sm text-text-secondary">{t(lang, "addons")} {item.selectedAddons.map((a) => a.name).join(", ")}</p>
                     )}
-                    <p className="text-accent font-semibold mt-1">
-                      {formatCurrency(item.itemTotal)}
-                    </p>
+                    <p className="text-accent font-semibold mt-1">{formatCurrency(item.itemTotal)}</p>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => onUpdateQuantity(index, -1)}
-                      className="p-1 rounded-full bg-border hover:bg-text-secondary/20"
-                    >
+                    <button onClick={() => onUpdateQuantity(index, -1)} className="p-1 rounded-full bg-border hover:bg-text-secondary/20">
                       <Minus className="w-4 h-4" />
                     </button>
-                    <span className="w-8 text-center font-semibold">
-                      {item.quantity}
-                    </span>
-                    <button
-                      onClick={() => onUpdateQuantity(index, 1)}
-                      className="p-1 rounded-full bg-border hover:bg-text-secondary/20"
-                    >
+                    <span className="w-8 text-center font-semibold">{item.quantity}</span>
+                    <button onClick={() => onUpdateQuantity(index, 1)} className="p-1 rounded-full bg-border hover:bg-text-secondary/20">
                       <Plus className="w-4 h-4" />
                     </button>
                   </div>
-                  <button
-                    onClick={() => onRemove(index)}
-                    className="p-1 text-error hover:bg-error/10 rounded"
-                  >
+                  <button onClick={() => onRemove(index)} className="p-1 text-error hover:bg-error/10 rounded">
                     <X className="w-5 h-5" />
                   </button>
                 </div>
               ))}
             </div>
-
             <div className="border-t border-border pt-4">
               <div className="flex justify-between text-xl font-bold text-text mb-4">
-                <span>Total</span>
+                <span>{t(lang, "total")}</span>
                 <span>{formatCurrency(total)}</span>
               </div>
-              <Button onClick={onCheckout} fullWidth size="lg">
-                Proceed to Checkout
-              </Button>
+              <Button onClick={onCheckout} fullWidth size="lg">{t(lang, "proceedToCheckout")}</Button>
             </div>
           </>
         )}
@@ -523,27 +457,24 @@ const CartModal: React.FC<CartModalProps> = ({
   );
 };
 
-// Item Customization Modal Component
+// Item Customization Modal
 interface ItemCustomizationModalProps {
   isOpen: boolean;
   item: MenuItem | null;
+  lang: Language;
   onClose: () => void;
   onAdd: (item: MenuItem, selectedSize?: any, selectedAddons?: any[]) => void;
+  getItemName: (item: MenuItem, lang: Language) => string;
+  getItemDesc: (item: MenuItem, lang: Language) => string | undefined;
 }
 
-const ItemCustomizationModal: React.FC<ItemCustomizationModalProps> = ({
-  isOpen,
-  item,
-  onClose,
-  onAdd,
-}) => {
+const ItemCustomizationModal: React.FC<ItemCustomizationModalProps> = ({ isOpen, item, lang, onClose, onAdd, getItemName, getItemDesc }) => {
   const [selectedSize, setSelectedSize] = useState<any>(null);
   const [selectedAddons, setSelectedAddons] = useState<any[]>([]);
 
   useEffect(() => {
-    if (item?.sizes && item.sizes.length > 0) {
-      setSelectedSize(item.sizes[0]);
-    }
+    if (item?.sizes && item.sizes.length > 0) setSelectedSize(item.sizes[0]);
+    setSelectedAddons([]);
   }, [item]);
 
   if (!item) return null;
@@ -558,72 +489,53 @@ const ItemCustomizationModal: React.FC<ItemCustomizationModalProps> = ({
 
   const calculateTotal = () => {
     const basePrice = selectedSize ? selectedSize.price : item.base_price;
-    const addonsTotal = selectedAddons.reduce(
-      (sum, addon) => sum + addon.price,
-      0
-    );
-    return basePrice + addonsTotal;
+    return basePrice + selectedAddons.reduce((sum, addon) => sum + addon.price, 0);
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={item.name} size="md">
+    <Modal isOpen={isOpen} onClose={onClose} title={getItemName(item, lang)} size="md">
       <div className="space-y-6">
         {item.image_url && (
-          <img
-            src={item.image_url}
-            alt={item.name}
-            className="w-full h-48 object-cover rounded-lg"
-          />
+          <img src={item.image_url} alt={getItemName(item, lang)} className="w-full h-48 object-cover rounded-lg" />
+        )}
+        {getItemDesc(item, lang) && (
+          <p className="text-text-secondary">{getItemDesc(item, lang)}</p>
         )}
 
-        {item.description && (
-          <p className="text-text-secondary">{item.description}</p>
-        )}
-
-        {/* Sizes */}
         {item.sizes && item.sizes.length > 0 && (
           <div>
-            <h4 className="font-semibold text-text mb-3">Select Size</h4>
+            <h4 className="font-semibold text-text mb-3">{t(lang, "selectSize")}</h4>
             <div className="space-y-2">
               {item.sizes.map((size) => (
                 <button
                   key={size.name}
                   onClick={() => setSelectedSize(size)}
                   className={`w-full flex items-center justify-between p-3 rounded-lg border-2 transition-colors ${
-                    selectedSize?.name === size.name
-                      ? "border-accent bg-accent/5"
-                      : "border-border hover:border-accent/50"
+                    selectedSize?.name === size.name ? "border-accent bg-accent/5" : "border-border hover:border-accent/50"
                   }`}
                 >
                   <span className="font-medium text-text">{size.name}</span>
-                  <span className="text-accent font-semibold">
-                    {formatCurrency(size.price)}
-                  </span>
+                  <span className="text-accent font-semibold">{formatCurrency(size.price)}</span>
                 </button>
               ))}
             </div>
           </div>
         )}
 
-        {/* Addons */}
         {item.addons && item.addons.length > 0 && (
           <div>
-            <h4 className="font-semibold text-text mb-3">Add-ons (Optional)</h4>
+            <h4 className="font-semibold text-text mb-3">{t(lang, "addonsOptional")}</h4>
             <div className="space-y-2">
               {item.addons.map((addon) => (
                 <button
                   key={addon.name}
                   onClick={() => toggleAddon(addon)}
                   className={`w-full flex items-center justify-between p-3 rounded-lg border-2 transition-colors ${
-                    selectedAddons.find((a) => a.name === addon.name)
-                      ? "border-accent bg-accent/5"
-                      : "border-border hover:border-accent/50"
+                    selectedAddons.find((a) => a.name === addon.name) ? "border-accent bg-accent/5" : "border-border hover:border-accent/50"
                   }`}
                 >
                   <span className="font-medium text-text">{addon.name}</span>
-                  <span className="text-accent font-semibold">
-                    +{formatCurrency(addon.price)}
-                  </span>
+                  <span className="text-accent font-semibold">+{formatCurrency(addon.price)}</span>
                 </button>
               ))}
             </div>
@@ -632,15 +544,11 @@ const ItemCustomizationModal: React.FC<ItemCustomizationModalProps> = ({
 
         <div className="border-t border-border pt-4">
           <div className="flex justify-between text-xl font-bold text-text mb-4">
-            <span>Total</span>
+            <span>{t(lang, "total")}</span>
             <span>{formatCurrency(calculateTotal())}</span>
           </div>
-          <Button
-            onClick={() => onAdd(item, selectedSize, selectedAddons)}
-            fullWidth
-            size="lg"
-          >
-            Add to Cart
+          <Button onClick={() => onAdd(item, selectedSize, selectedAddons)} fullWidth size="lg">
+            {t(lang, "addToCart")}
           </Button>
         </div>
       </div>
@@ -648,22 +556,18 @@ const ItemCustomizationModal: React.FC<ItemCustomizationModalProps> = ({
   );
 };
 
-// Checkout Modal Component
+// Checkout Modal
 interface CheckoutModalProps {
   isOpen: boolean;
   cart: CartItem[];
   restaurantId: string;
+  lang: Language;
   onClose: () => void;
   onSuccess: () => void;
+  getItemName: (item: MenuItem, lang: Language) => string;
 }
 
-const CheckoutModal: React.FC<CheckoutModalProps> = ({
-  isOpen,
-  cart,
-  restaurantId,
-  onClose,
-  onSuccess,
-}) => {
+const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, cart, restaurantId, lang, onClose, onSuccess, getItemName }) => {
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [orderType, setOrderType] = useState<"table" | "takeaway">("table");
@@ -673,39 +577,23 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
-  const subtotal = cart.reduce(
-    (sum, item) => sum + item.itemTotal * item.quantity,
-    0
-  );
-  const tax = subtotal * 0.05; // 5% tax
+  const subtotal = cart.reduce((sum, item) => sum + item.itemTotal * item.quantity, 0);
+  const tax = subtotal * 0.07;
   const total = subtotal + tax;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    if (!customerName.trim()) {
-      setError("Please enter your name");
-      return;
-    }
-
-    if (!isValidPhone(customerPhone)) {
-      setError("Please enter a valid 10-digit phone number");
-      return;
-    }
-
-    if (orderType === "table" && !tableNumber.trim()) {
-      setError("Please enter table number");
-      return;
-    }
+    if (!customerName.trim()) { setError(t(lang, "enterName")); return; }
+    if (!isValidPhone(customerPhone)) { setError(t(lang, "enterPhone")); return; }
+    if (orderType === "table" && !tableNumber.trim()) { setError(t(lang, "enterTable")); return; }
 
     setLoading(true);
 
     const orderData = {
       restaurant_id: restaurantId,
-      order_type: (orderType === "table" ? "qr" : "counter") as
-        | "qr"
-        | "counter",
+      order_type: (orderType === "table" ? "qr" : "counter") as "qr" | "counter",
       table_number: orderType === "table" ? tableNumber : undefined,
       customer_name: customerName,
       customer_phone: customerPhone,
@@ -717,7 +605,6 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
         selected_size: item.selectedSize,
         selected_addons: item.selectedAddons,
         item_total: item.itemTotal,
-        special_instructions: undefined,
       })),
       subtotal,
       tax,
@@ -730,158 +617,128 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
     if (!orderError) {
       setSuccess(true);
-      setTimeout(() => {
-        onSuccess();
-        resetForm();
-      }, 2000);
+      setTimeout(() => { onSuccess(); resetForm(); }, 2000);
     } else {
       setError(orderError?.message || "Failed to place order");
     }
   };
 
   const resetForm = () => {
-    setCustomerName("");
-    setCustomerPhone("");
-    setTableNumber("");
-    setNotes("");
-    setOrderType("table");
-    setSuccess(false);
+    setCustomerName(""); setCustomerPhone(""); setTableNumber("");
+    setNotes(""); setOrderType("table"); setSuccess(false);
   };
 
   if (success) {
     return (
-      <Modal isOpen={isOpen} onClose={onClose} title="Order Placed!" size="md">
+      <Modal isOpen={isOpen} onClose={onClose} title={t(lang, "orderPlaced")} size="md">
         <div className="text-center py-8">
           <CheckCircle className="w-16 h-16 text-success mx-auto mb-4" />
-          <h3 className="text-2xl font-bold text-text mb-2">
-            Order Successful!
-          </h3>
-          <p className="text-text-secondary mb-6">
-            Your order has been placed successfully. The restaurant will prepare
-            it shortly.
-          </p>
-          <Button onClick={onClose} fullWidth>
-            Close
-          </Button>
+          <h3 className="text-2xl font-bold text-text mb-2">{t(lang, "orderSuccess")}</h3>
+          <p className="text-text-secondary mb-6">{t(lang, "orderSuccessDesc")}</p>
+          <Button onClick={onClose} fullWidth>{t(lang, "close")}</Button>
         </div>
       </Modal>
     );
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Checkout" size="lg">
+    <Modal isOpen={isOpen} onClose={onClose} title={t(lang, "checkout")} size="lg">
       <form onSubmit={handleSubmit} className="space-y-6">
         {error && <Alert type="error" message={error} />}
 
-        {/* Order Type */}
         <div>
-          <label className="label mb-3">Order Type</label>
+          <label className="label mb-3">{t(lang, "orderType")}</label>
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
               onClick={() => setOrderType("table")}
               className={`p-4 rounded-lg border-2 font-semibold transition-colors ${
-                orderType === "table"
-                  ? "border-accent bg-accent/10 text-accent"
-                  : "border-border hover:border-accent/50"
+                orderType === "table" ? "border-accent bg-accent/10 text-accent" : "border-border hover:border-accent/50"
               }`}
             >
-              Dine In (Table)
+              {t(lang, "dineIn")}
             </button>
             <button
               type="button"
               onClick={() => setOrderType("takeaway")}
               className={`p-4 rounded-lg border-2 font-semibold transition-colors ${
-                orderType === "takeaway"
-                  ? "border-accent bg-accent/10 text-accent"
-                  : "border-border hover:border-accent/50"
+                orderType === "takeaway" ? "border-accent bg-accent/10 text-accent" : "border-border hover:border-accent/50"
               }`}
             >
-              Takeaway / Parcel
+              {t(lang, "takeaway")}
             </button>
           </div>
         </div>
 
-        {/* Table Number (only for table orders) */}
         {orderType === "table" && (
           <Input
-            label="Table Number"
+            label={t(lang, "tableNumber")}
             value={tableNumber}
             onChange={(e) => setTableNumber(e.target.value)}
-            placeholder="Enter your table number"
+            placeholder={t(lang, "tableNumberPlaceholder")}
             required
           />
         )}
 
-        {/* Customer Details */}
         <Input
-          label="Your Name"
+          label={t(lang, "yourName")}
           value={customerName}
           onChange={(e) => setCustomerName(e.target.value)}
-          placeholder="Enter your name"
+          placeholder={t(lang, "yourNamePlaceholder")}
           required
         />
 
         <Input
-          label="Phone Number"
+          label={t(lang, "phoneNumber")}
           type="tel"
           value={customerPhone}
           onChange={(e) => setCustomerPhone(e.target.value)}
-          placeholder="10-digit mobile number"
+          placeholder={t(lang, "phonePlaceholder")}
           required
-          helperText="We'll use this to contact you about your order"
+          helperText={t(lang, "phoneHelper")}
         />
 
-        {/* Special Instructions */}
         <div>
-          <label className="label mb-2">Special Instructions (Optional)</label>
+          <label className="label mb-2">{t(lang, "specialInstructions")}</label>
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Any special requests for your order..."
+            placeholder={t(lang, "specialInstructionsPlaceholder")}
             rows={3}
             className="input-field"
           />
         </div>
 
-        {/* Order Summary */}
         <div className="bg-bg-subtle rounded-lg p-4 space-y-2">
-          <h4 className="font-semibold text-text mb-3">Order Summary</h4>
+          <h4 className="font-semibold text-text mb-3">{t(lang, "orderSummary")}</h4>
           {cart.map((item, index) => (
             <div key={index} className="flex justify-between text-sm">
               <span className="text-text-secondary">
-                {item.quantity}x {item.name}
+                {item.quantity}x {getItemName(item, lang)}
                 {item.selectedSize && ` (${item.selectedSize.name})`}
               </span>
-              <span className="text-text">
-                {formatCurrency(item.itemTotal * item.quantity)}
-              </span>
+              <span className="text-text">{formatCurrency(item.itemTotal * item.quantity)}</span>
             </div>
           ))}
           <div className="border-t border-border pt-2 mt-2 space-y-1">
             <div className="flex justify-between text-text-secondary">
-              <span>Subtotal</span>
+              <span>{t(lang, "subtotal")}</span>
               <span>{formatCurrency(subtotal)}</span>
             </div>
             <div className="flex justify-between text-text-secondary">
-              <span>Tax (5%)</span>
+              <span>{t(lang, "tax")}</span>
               <span>{formatCurrency(tax)}</span>
             </div>
             <div className="flex justify-between text-xl font-bold text-text pt-2 border-t border-border">
-              <span>Total</span>
+              <span>{t(lang, "total")}</span>
               <span>{formatCurrency(total)}</span>
             </div>
           </div>
         </div>
 
-        {/* Actions */}
         <div className="flex gap-3">
-          <Button type="button" variant="outline" onClick={onClose} fullWidth>
-            Cancel
-          </Button>
-          <Button type="submit" loading={loading} fullWidth>
-            Place Order
-          </Button>
+          <Button type="button" variant="outline" onClick={onClose} fullWidth>{t(lang, "cancel")}</Button>
+          <Button type="submit" loading={loading} fullWidth>{t(lang, "placeOrder")}</Button>
         </div>
       </form>
     </Modal>

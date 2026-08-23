@@ -100,7 +100,7 @@ export const isValidEmail = (email: string): boolean => {
  * Validate phone number (Indian format)
  */
 export const isValidPhone = (phone: string): boolean => {
-  const re = /^[6-9]\d{9}$/;
+  const re = /^0[6-9]\d{8}$/;
   return re.test(phone.replace(/[\s\-()]/g, ""));
 };
 

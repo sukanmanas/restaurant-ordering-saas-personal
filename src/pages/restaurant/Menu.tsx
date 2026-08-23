@@ -313,7 +313,11 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
   const [error, setError] = useState("");
   const [formData, setFormData] = useState({
     name: "",
+    name_en: "",
+    name_zh: "",
     description: "",
+    description_en: "",
+    description_zh: "",
     category: "",
     base_price: "",
     image_url: "",
@@ -329,7 +333,11 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
     if (mode === "edit" && item) {
       setFormData({
         name: item.name,
+        name_en: item.name_en || "",
+        name_zh: item.name_zh || "",
         description: item.description || "",
+        description_en: item.description_en || "",
+        description_zh: item.description_zh || "",
         category: item.category || "",
         base_price: item.base_price.toString(),
         image_url: item.image_url || "",
@@ -340,7 +348,11 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
     } else {
       setFormData({
         name: "",
+        name_en: "",
+        name_zh: "",
         description: "",
+        description_en: "",
+        description_zh: "",
         category: "",
         base_price: "",
         image_url: "",
@@ -371,7 +383,11 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
     const menuItemData = {
       restaurant_id: user.restaurant_id,
       name: formData.name,
+      name_en: formData.name_en || undefined,
+      name_zh: formData.name_zh || undefined,
       description: formData.description || undefined,
+      description_en: formData.description_en || undefined,
+      description_zh: formData.description_zh || undefined,
       base_price: parseFloat(formData.base_price),
       image_url: formData.image_url || undefined,
       is_available: formData.is_available,
@@ -456,12 +472,43 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
         <Textarea
           label="Description (Optional)"
           value={formData.description}
-          onChange={(e) =>
-            setFormData({ ...formData, description: e.target.value })
-          }
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           placeholder="Describe your item..."
           rows={2}
         />
+
+        {/* Translations */}
+        <div className="border border-border rounded-lg p-4 space-y-4">
+          <p className="text-sm font-semibold text-text">Translations (Optional)</p>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <Input
+              label="English Name"
+              value={formData.name_en}
+              onChange={(e) => setFormData({ ...formData, name_en: e.target.value })}
+              placeholder="e.g., Pad Thai"
+            />
+            <Input
+              label="Chinese Name"
+              value={formData.name_zh}
+              onChange={(e) => setFormData({ ...formData, name_zh: e.target.value })}
+              placeholder="e.g., 泰式炒河粉"
+            />
+          </div>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <Input
+              label="English Description"
+              value={formData.description_en}
+              onChange={(e) => setFormData({ ...formData, description_en: e.target.value })}
+              placeholder="English description..."
+            />
+            <Input
+              label="Chinese Description"
+              value={formData.description_zh}
+              onChange={(e) => setFormData({ ...formData, description_zh: e.target.value })}
+              placeholder="中文描述..."
+            />
+          </div>
+        </div>
 
         <div className="grid sm:grid-cols-2 gap-4">
           <Input

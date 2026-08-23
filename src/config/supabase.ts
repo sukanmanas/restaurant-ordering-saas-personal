@@ -66,7 +66,11 @@ export interface MenuItem {
   id: string;
   restaurant_id: string;
   name: string;
+  name_en?: string;
+  name_zh?: string;
   description?: string;
+  description_en?: string;
+  description_zh?: string;
   base_price: number;
   category?: string;
   image_url?: string;

@@ -51,3 +51,13 @@ CREATE POLICY "Anon can update restaurants" ON restaurants FOR UPDATE USING (tru
 CREATE POLICY "Anon can manage menu items" ON menu_items FOR ALL USING (true);
 CREATE POLICY "Anon can manage orders" ON orders FOR ALL USING (true);
 CREATE POLICY "Anon can manage menu categories" ON menu_categories FOR ALL USING (true);
+
+
+-- =====================================================
+-- STEP 4: Add translation columns to menu_items
+-- Run this after Step 3
+-- =====================================================
+ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS name_en TEXT;
+ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS name_zh TEXT;
+ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS description_en TEXT;
+ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS description_zh TEXT;
