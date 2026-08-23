@@ -73,7 +73,7 @@ const Menu: React.FC = () => {
   };
 
   if (loading) {
-    return <Loading text="Loading menu..." />;
+    return <Loading text="กำลังโหลดเมนู..." />;
   }
 
   return (
@@ -81,16 +81,14 @@ const Menu: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-text mb-2">Menu Management</h2>
-          <p className="text-text-secondary">
-            Manage your menu items and availability
-          </p>
+          <h2 className="text-2xl font-bold text-text mb-2">จัดการเมนู</h2>
+          <p className="text-text-secondary">จัดการรายการเมนูและสถานะการขาย</p>
         </div>
         <Button
           icon={<Plus className="w-5 h-5" />}
           onClick={() => setShowAddModal(true)}
         >
-          Add Item
+          เพิ่มเมนู
         </Button>
       </div>
 
@@ -98,7 +96,7 @@ const Menu: React.FC = () => {
       <div className="flex items-center space-x-2 text-sm text-success">
         <div className="w-2 h-2 bg-success rounded-full animate-pulse" />
         <span>
-          Live updates • Availability changes update customers in real-time
+          อัปเดตแบบเรียลไทม์ • การเปลี่ยนสถานะจะแสดงให้ลูกค้าเห็นทันที
         </span>
       </div>
 
@@ -106,7 +104,7 @@ const Menu: React.FC = () => {
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="flex-1">
           <Input
-            placeholder="Search menu items..."
+            placeholder="ค้นหาเมนู..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             icon={<Search className="w-5 h-5" />}
@@ -123,7 +121,7 @@ const Menu: React.FC = () => {
                   : "bg-white border border-border text-text-secondary hover:bg-bg-subtle"
               }`}
             >
-              {category === "all" ? "All Items" : category}
+              {category === "all" ? "ทั้งหมด" : category}
             </button>
           ))}
         </div>
@@ -178,7 +176,7 @@ const Menu: React.FC = () => {
                         <Badge
                           variant={item.is_available ? "success" : "neutral"}
                         >
-                          {item.is_available ? "Available" : "Unavailable"}
+                          {item.is_available ? "พร้อมขาย" : "หยุดขาย"}
                         </Badge>
                       </div>
                       {item.category && (
@@ -455,14 +453,14 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={mode === "add" ? "Add Menu Item" : "Edit Menu Item"}
+      title={mode === "add" ? "เพิ่มเมนูใหม่" : "แก้ไขเมนู"}
       size="lg"
     >
       <form onSubmit={handleSubmit} className="space-y-6">
         {error && <Alert type="error" message={error} />}
 
         <Input
-          label="Item Name"
+          label="ชื่อเมนู (ภาษาไทย)"
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           placeholder="e.g., Margherita Pizza"
@@ -470,7 +468,7 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
         />
 
         <Textarea
-          label="Description (Optional)"
+          label="รายละเอียด (ไม่บังคับ)"
           value={formData.description}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           placeholder="Describe your item..."
@@ -512,7 +510,7 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
 
         <div className="grid sm:grid-cols-2 gap-4">
           <Input
-            label="Category"
+            label="หมวดหมู่"
             value={formData.category}
             onChange={(e) =>
               setFormData({ ...formData, category: e.target.value })
@@ -521,7 +519,7 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
           />
 
           <Input
-            label="Base Price"
+            label="ราคา (฿)"
             type="number"
             step="0.01"
             value={formData.base_price}
@@ -534,7 +532,7 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
         </div>
 
         <Input
-          label="Image URL (Optional)"
+          label="ลิงก์รูปภาพ (ไม่บังคับ)"
           value={formData.image_url}
           onChange={(e) =>
             setFormData({ ...formData, image_url: e.target.value })
@@ -648,7 +646,7 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
             Cancel
           </Button>
           <Button type="submit" loading={loading} fullWidth>
-            {mode === "add" ? "Add Item" : "Save Changes"}
+            {mode === "add" ? "เพิ่มเมนู" : "บันทึก"}
           </Button>
         </div>
       </form>

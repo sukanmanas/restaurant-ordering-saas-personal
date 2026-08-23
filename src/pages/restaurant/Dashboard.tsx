@@ -59,8 +59,8 @@ const PinScreen: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) => {
     <div className="min-h-screen bg-bg-subtle flex items-center justify-center">
       <div className="bg-white rounded-2xl shadow-lg p-8 w-80 text-center">
         <Store className="w-10 h-10 text-accent mx-auto mb-4" />
-        <h2 className="text-xl font-bold text-text mb-1">Staff Access</h2>
-        <p className="text-sm text-text-secondary mb-6">Enter your PIN to continue</p>
+        <h2 className="text-xl font-bold text-text mb-1">เข้าสู่ระบบ</h2>
+        <p className="text-sm text-text-secondary mb-6">กรอก PIN เพื่อดำเนินการต่อ</p>
 
         {/* Dots */}
         <div className="flex justify-center space-x-3 mb-6">
@@ -77,7 +77,7 @@ const PinScreen: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) => {
         </div>
 
         {error && (
-          <p className="text-sm text-red-500 mb-4">Incorrect PIN, try again</p>
+          <p className="text-sm text-red-500 mb-4">PIN ไม่ถูกต้อง กรุณาลองใหม่</p>
         )}
 
         {/* Keypad */}
@@ -153,11 +153,11 @@ const RestaurantDashboard: React.FC = () => {
   if (!restaurant) return null;
 
   const navItems = [
-    { path: "/restaurant", icon: LayoutDashboard, label: "Dashboard" },
-    { path: "/restaurant/orders", icon: ShoppingBag, label: "Orders" },
-    { path: "/restaurant/menu", icon: UtensilsCrossed, label: "Menu" },
-    { path: "/restaurant/reports", icon: FileText, label: "Reports" },
-    { path: "/restaurant/settings", icon: Settings, label: "Settings" },
+    { path: "/restaurant", icon: LayoutDashboard, label: "หน้าหลัก" },
+    { path: "/restaurant/orders", icon: ShoppingBag, label: "ออเดอร์" },
+    { path: "/restaurant/menu", icon: UtensilsCrossed, label: "เมนู" },
+    { path: "/restaurant/reports", icon: FileText, label: "รายงาน" },
+    { path: "/restaurant/settings", icon: Settings, label: "ตั้งค่า" },
   ];
 
   return (
