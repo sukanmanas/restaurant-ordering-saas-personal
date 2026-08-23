@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import {
-  useNavigate,
   Routes,
   Route,
   Link,
@@ -8,46 +7,54 @@ import {
 } from "react-router-dom";
 import {
   Store as StoreIcon,
-  LogOut,
   LayoutDashboard,
   ShoppingBag,
   UtensilsCrossed,
   FileText,
   Settings,
 } from "lucide-react";
+import { supabase } from "../../config/supabase";
 import RestaurantHome from "./RestaurantHome";
 import Orders from "./Orders";
 import Menu from "./Menu";
 import Reports from "./Reports";
 import RestaurantSettings from "./RestaurantSettings";
 
+const RESTAURANT_SLUG = "krua-pa-toi";
+
 const RestaurantDashboard: React.FC = () => {
-  const navigate = useNavigate();
   const location = useLocation();
-  const [user, setUser] = useState<any>(null);
   const [restaurant, setRestaurant] = useState<any>(null);
 
   useEffect(() => {
-    const userData = localStorage.getItem("user");
-    if (!userData) {
-      navigate("/login");
-    } else {
-      const parsedUser = JSON.parse(userData);
-      setUser(parsedUser);
-      // In real app, fetch restaurant data
-      setRestaurant({
-        name: "Demo Restaurant",
-        slug: "demo-restaurant",
-      });
+    const cached = localStorage.getItem("user");
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (parsed.restaurant_slug === RESTAURANT_SLUG) {
+        setRestaurant(parsed);
+        return;
+      }
     }
-  }, [navigate]);
 
-  const handleLogout = () => {
-    localStorage.removeItem("user");
-    navigate("/login");
-  };
+    supabase
+      .from("restaurants")
+      .select("id, name, slug")
+      .eq("slug", RESTAURANT_SLUG)
+      .single()
+      .then(({ data }) => {
+        if (data) {
+          const session = {
+            restaurant_id: data.id,
+            restaurant_name: data.name,
+            restaurant_slug: data.slug,
+          };
+          localStorage.setItem("user", JSON.stringify(session));
+          setRestaurant(session);
+        }
+      });
+  }, []);
 
-  if (!user) return null;
+  if (!restaurant) return null;
 
   const navItems = [
     { path: "/restaurant", icon: LayoutDashboard, label: "Dashboard" },
@@ -65,20 +72,10 @@ const RestaurantDashboard: React.FC = () => {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-3">
               <StoreIcon className="w-8 h-8 text-accent" />
-              <div>
-                <h1 className="text-lg font-bold text-text">
-                  {restaurant?.name || "Restaurant"}
-                </h1>
-                <p className="text-xs text-text-secondary">{user.email}</p>
-              </div>
+              <h1 className="text-lg font-bold text-text">
+                {restaurant?.restaurant_name || "Restaurant"}
+              </h1>
             </div>
-            <button
-              onClick={handleLogout}
-              className="flex items-center space-x-2 text-text-secondary hover:text-error transition-colors"
-            >
-              <LogOut className="w-5 h-5" />
-              <span>Logout</span>
-            </button>
           </div>
         </div>
       </nav>

@@ -1,4 +1,13 @@
--- Run this in Supabase SQL Editor to create Krua Pa Toi restaurant
+-- =====================================================
+-- STEP 1: Run database/setup.sql first
+-- (copy from database/setup.sql and run in Supabase SQL Editor)
+-- =====================================================
+
+
+-- =====================================================
+-- STEP 2: Run this after setup.sql
+-- Creates Krua Pa Toi restaurant
+-- =====================================================
 DO $$
 DECLARE
   v_restaurant_id UUID;
@@ -27,7 +36,18 @@ BEGIN
   );
 END $$;
 
--- Restaurant login credentials:
--- Email: owner@kruapatoi.local
--- Password: krua1234
--- URL: http://localhost:5173
+
+-- =====================================================
+-- STEP 3: Run this after Step 2
+-- Opens up RLS policies for single-restaurant personal app
+-- =====================================================
+DROP POLICY IF EXISTS "Restaurant owners can view their restaurant" ON restaurants;
+DROP POLICY IF EXISTS "Restaurant owners can update their restaurant" ON restaurants;
+DROP POLICY IF EXISTS "Restaurant owners can manage menu" ON menu_items;
+DROP POLICY IF EXISTS "Restaurant owners can manage orders" ON orders;
+
+CREATE POLICY "Anon can view restaurants" ON restaurants FOR SELECT USING (true);
+CREATE POLICY "Anon can update restaurants" ON restaurants FOR UPDATE USING (true);
+CREATE POLICY "Anon can manage menu items" ON menu_items FOR ALL USING (true);
+CREATE POLICY "Anon can manage orders" ON orders FOR ALL USING (true);
+CREATE POLICY "Anon can manage menu categories" ON menu_categories FOR ALL USING (true);
