@@ -13,6 +13,7 @@ import {
   FileText,
   Settings,
 } from "lucide-react";
+import CryptoJS from "crypto-js";
 import { supabase } from "../../config/supabase";
 import RestaurantHome from "./RestaurantHome";
 import Orders from "./Orders";
@@ -21,12 +22,103 @@ import Reports from "./Reports";
 import RestaurantSettings from "./RestaurantSettings";
 
 const RESTAURANT_SLUG = "krua-pa-toi";
+const PIN_HASH = CryptoJS.SHA256("021244").toString();
+const Store = StoreIcon;
+
+const PinScreen: React.FC<{ onSuccess: () => void }> = ({ onSuccess }) => {
+  const [pin, setPin] = useState("");
+  const [error, setError] = useState(false);
+
+  const handleKey = (digit: string) => {
+    if (pin.length >= 6) return;
+    const next = pin + digit;
+    setPin(next);
+    setError(false);
+
+    if (next.length === 6) {
+      if (CryptoJS.SHA256(next).toString() === PIN_HASH) {
+        sessionStorage.setItem("pin_verified", "1");
+        onSuccess();
+      } else {
+        setTimeout(() => {
+          setPin("");
+          setError(true);
+        }, 300);
+      }
+    }
+  };
+
+  const handleDelete = () => {
+    setPin((p) => p.slice(0, -1));
+    setError(false);
+  };
+
+  const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "del"];
+
+  return (
+    <div className="min-h-screen bg-bg-subtle flex items-center justify-center">
+      <div className="bg-white rounded-2xl shadow-lg p-8 w-80 text-center">
+        <Store className="w-10 h-10 text-accent mx-auto mb-4" />
+        <h2 className="text-xl font-bold text-text mb-1">Staff Access</h2>
+        <p className="text-sm text-text-secondary mb-6">Enter your PIN to continue</p>
+
+        {/* Dots */}
+        <div className="flex justify-center space-x-3 mb-6">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div
+              key={i}
+              className={`w-3 h-3 rounded-full transition-colors ${
+                i < pin.length
+                  ? error ? "bg-red-500" : "bg-accent"
+                  : "bg-gray-200"
+              }`}
+            />
+          ))}
+        </div>
+
+        {error && (
+          <p className="text-sm text-red-500 mb-4">Incorrect PIN, try again</p>
+        )}
+
+        {/* Keypad */}
+        <div className="grid grid-cols-3 gap-3">
+          {keys.map((key, i) =>
+            key === "" ? (
+              <div key={i} />
+            ) : key === "del" ? (
+              <button
+                key={i}
+                onClick={handleDelete}
+                className="h-14 rounded-xl bg-gray-100 text-text font-medium text-sm hover:bg-gray-200 transition-colors"
+              >
+                ⌫
+              </button>
+            ) : (
+              <button
+                key={i}
+                onClick={() => handleKey(key)}
+                className="h-14 rounded-xl bg-gray-100 text-text font-semibold text-xl hover:bg-gray-200 transition-colors"
+              >
+                {key}
+              </button>
+            )
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const RestaurantDashboard: React.FC = () => {
   const location = useLocation();
   const [restaurant, setRestaurant] = useState<any>(null);
+  const [pinVerified, setPinVerified] = useState(
+    () => sessionStorage.getItem("pin_verified") === "1"
+  );
 
   useEffect(() => {
+    if (!pinVerified) return;
+
     const cached = localStorage.getItem("user");
     if (cached) {
       const parsed = JSON.parse(cached);
@@ -52,7 +144,11 @@ const RestaurantDashboard: React.FC = () => {
           setRestaurant(session);
         }
       });
-  }, []);
+  }, [pinVerified]);
+
+  if (!pinVerified) {
+    return <PinScreen onSuccess={() => setPinVerified(true)} />;
+  }
 
   if (!restaurant) return null;
 

@@ -10,7 +10,7 @@ export const SUPABASE_ANON_KEY =
 // Application Configuration
 export const APP_CONFIG = {
   appName: "FoodOrder",
-  defaultCurrency: "₹",
+  defaultCurrency: "฿",
   taxRate: 0.05, // 5% GST
   orderPrefix: "ORD",
 
