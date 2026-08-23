@@ -12,6 +12,7 @@ import {
   UtensilsCrossed,
   FileText,
   Settings,
+  QrCode,
 } from "lucide-react";
 import CryptoJS from "crypto-js";
 import { supabase } from "../../config/supabase";
@@ -20,6 +21,7 @@ import Orders from "./Orders";
 import Menu from "./Menu";
 import Reports from "./Reports";
 import RestaurantSettings from "./RestaurantSettings";
+import QRCodes from "./QRCodes";
 
 const RESTAURANT_SLUG = "krua-pa-toi";
 const PIN_HASH = CryptoJS.SHA256("021244").toString();
@@ -156,6 +158,7 @@ const RestaurantDashboard: React.FC = () => {
     { path: "/restaurant", icon: LayoutDashboard, label: "หน้าหลัก" },
     { path: "/restaurant/orders", icon: ShoppingBag, label: "ออเดอร์" },
     { path: "/restaurant/menu", icon: UtensilsCrossed, label: "เมนู" },
+    { path: "/restaurant/qrcodes", icon: QrCode, label: "QR Code" },
     { path: "/restaurant/reports", icon: FileText, label: "รายงาน" },
     { path: "/restaurant/settings", icon: Settings, label: "ตั้งค่า" },
   ];
@@ -207,6 +210,7 @@ const RestaurantDashboard: React.FC = () => {
           <Route index element={<RestaurantHome />} />
           <Route path="orders" element={<Orders />} />
           <Route path="menu" element={<Menu />} />
+          <Route path="qrcodes" element={<QRCodes />} />
           <Route path="reports" element={<Reports />} />
           <Route path="settings" element={<RestaurantSettings />} />
         </Routes>

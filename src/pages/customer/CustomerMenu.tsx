@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import {
   ShoppingCart,
   Plus,
@@ -53,6 +53,8 @@ const getItemDesc = (item: MenuItem, lang: Language): string | undefined => {
 
 const CustomerMenu: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
+  const [searchParams] = useSearchParams();
+  const tableFromUrl = searchParams.get("table") || "";
   const [lang, setLang] = useState<Language>(
     () => (localStorage.getItem("menu_lang") as Language) || "th"
   );
@@ -360,6 +362,7 @@ const CustomerMenu: React.FC = () => {
         cart={cart}
         restaurantId={restaurant.id}
         lang={lang}
+        tableFromUrl={tableFromUrl}
         onClose={() => setShowCheckout(false)}
         onSuccess={() => { setCart([]); setShowCheckout(false); }}
         getItemName={getItemName}
@@ -562,16 +565,17 @@ interface CheckoutModalProps {
   cart: CartItem[];
   restaurantId: string;
   lang: Language;
+  tableFromUrl: string;
   onClose: () => void;
   onSuccess: () => void;
   getItemName: (item: MenuItem, lang: Language) => string;
 }
 
-const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, cart, restaurantId, lang, onClose, onSuccess, getItemName }) => {
+const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, cart, restaurantId, lang, tableFromUrl, onClose, onSuccess, getItemName }) => {
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
-  const [orderType, setOrderType] = useState<"table" | "takeaway">("table");
-  const [tableNumber, setTableNumber] = useState("");
+  const [orderType, setOrderType] = useState<"table" | "takeaway">(tableFromUrl ? "table" : "table");
+  const [tableNumber, setTableNumber] = useState(tableFromUrl);
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -624,8 +628,8 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, cart, restaurantI
   };
 
   const resetForm = () => {
-    setCustomerName(""); setCustomerPhone(""); setTableNumber("");
-    setNotes(""); setOrderType("table"); setSuccess(false);
+    setCustomerName(""); setCustomerPhone(""); setTableNumber(tableFromUrl);
+    setNotes(""); setOrderType(tableFromUrl ? "table" : "table"); setSuccess(false);
   };
 
   if (success) {
@@ -646,38 +650,49 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, cart, restaurantI
       <form onSubmit={handleSubmit} className="space-y-6">
         {error && <Alert type="error" message={error} />}
 
-        <div>
-          <label className="label mb-3">{t(lang, "orderType")}</label>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={() => setOrderType("table")}
-              className={`p-4 rounded-lg border-2 font-semibold transition-colors ${
-                orderType === "table" ? "border-accent bg-accent/10 text-accent" : "border-border hover:border-accent/50"
-              }`}
-            >
-              {t(lang, "dineIn")}
-            </button>
-            <button
-              type="button"
-              onClick={() => setOrderType("takeaway")}
-              className={`p-4 rounded-lg border-2 font-semibold transition-colors ${
-                orderType === "takeaway" ? "border-accent bg-accent/10 text-accent" : "border-border hover:border-accent/50"
-              }`}
-            >
-              {t(lang, "takeaway")}
-            </button>
+        {/* If table came from QR, show locked table info; otherwise show order type selector */}
+        {tableFromUrl ? (
+          <div className="p-4 bg-accent/10 border border-accent/20 rounded-lg">
+            <p className="font-semibold text-accent">
+              {t(lang, "tableNumber")}: {tableFromUrl}
+            </p>
           </div>
-        </div>
+        ) : (
+          <>
+            <div>
+              <label className="label mb-3">{t(lang, "orderType")}</label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setOrderType("table")}
+                  className={`p-4 rounded-lg border-2 font-semibold transition-colors ${
+                    orderType === "table" ? "border-accent bg-accent/10 text-accent" : "border-border hover:border-accent/50"
+                  }`}
+                >
+                  {t(lang, "dineIn")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOrderType("takeaway")}
+                  className={`p-4 rounded-lg border-2 font-semibold transition-colors ${
+                    orderType === "takeaway" ? "border-accent bg-accent/10 text-accent" : "border-border hover:border-accent/50"
+                  }`}
+                >
+                  {t(lang, "takeaway")}
+                </button>
+              </div>
+            </div>
 
-        {orderType === "table" && (
-          <Input
-            label={t(lang, "tableNumber")}
-            value={tableNumber}
-            onChange={(e) => setTableNumber(e.target.value)}
-            placeholder={t(lang, "tableNumberPlaceholder")}
-            required
-          />
+            {orderType === "table" && (
+              <Input
+                label={t(lang, "tableNumber")}
+                value={tableNumber}
+                onChange={(e) => setTableNumber(e.target.value)}
+                placeholder={t(lang, "tableNumberPlaceholder")}
+                required
+              />
+            )}
+          </>
         )}
 
         <Input
