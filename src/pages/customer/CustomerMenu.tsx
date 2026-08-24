@@ -551,7 +551,7 @@ const ItemCustomizationModal: React.FC<ItemCustomizationModalProps> = ({ isOpen,
     setSelectedAddons([]);
     setSpecialInstructions("");
     setSelectedSpicyLevel("");
-  }, [item]);
+  }, [item, isOpen]);
 
   if (!item) return null;
 
