@@ -28,8 +28,8 @@ import { type Language, t } from "../../i18n/translations";
 
 interface CartItem extends MenuItem {
   quantity: number;
-  selectedSize?: { name: string; price: number };
-  selectedAddons: { name: string; price: number }[];
+  selectedSize?: { name: string; name_en?: string; name_zh?: string; price: number };
+  selectedAddons: { name: string; name_en?: string; name_zh?: string; price: number }[];
   itemTotal: number;
   specialInstructions?: string;
 }
