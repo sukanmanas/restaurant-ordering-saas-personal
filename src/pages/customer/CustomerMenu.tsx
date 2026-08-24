@@ -24,7 +24,7 @@ import {
 import type { MenuItem } from "../../config/supabase";
 import { formatCurrency, isValidPhone } from "../../utils/helpers";
 import { supabase } from "../../config/supabase";
-import { type Language, t } from "../../i18n/translations";
+import { type Language, t, getSpicyLevels } from "../../i18n/translations";
 
 interface CartItem extends MenuItem {
   quantity: number;
@@ -32,6 +32,7 @@ interface CartItem extends MenuItem {
   selectedAddons: { name: string; name_en?: string; name_zh?: string; price: number }[];
   itemTotal: number;
   specialInstructions?: string;
+  selectedSpicyLevel?: string;
 }
 
 const LANGUAGES: { code: Language; label: string }[] = [
@@ -127,19 +128,20 @@ const CustomerMenu: React.FC = () => {
     return matchesSearch && matchesCategory && item.is_available;
   });
 
-  const addToCart = (item: MenuItem, selectedSize?: any, selectedAddons: any[] = [], specialInstructions?: string) => {
+  const addToCart = (item: MenuItem, selectedSize?: any, selectedAddons: any[] = [], specialInstructions?: string, selectedSpicyLevel?: string) => {
     const basePrice = item.base_price + (selectedSize ? selectedSize.price : 0);
     const addonsTotal = selectedAddons.reduce((sum, addon) => sum + addon.price, 0);
     const itemTotal = basePrice + addonsTotal;
 
-    const cartItem: CartItem = { ...item, quantity: 1, selectedSize, selectedAddons, itemTotal, specialInstructions: specialInstructions || undefined };
+    const cartItem: CartItem = { ...item, quantity: 1, selectedSize, selectedAddons, itemTotal, specialInstructions: specialInstructions || undefined, selectedSpicyLevel: selectedSpicyLevel || undefined };
 
     const existingIndex = cart.findIndex(
       (ci) =>
         ci.id === item.id &&
         ci.selectedSize?.name === selectedSize?.name &&
         JSON.stringify(ci.selectedAddons) === JSON.stringify(selectedAddons) &&
-        ci.specialInstructions === (specialInstructions || undefined)
+        ci.specialInstructions === (specialInstructions || undefined) &&
+        ci.selectedSpicyLevel === (selectedSpicyLevel || undefined)
     );
 
     if (existingIndex >= 0) {
@@ -476,6 +478,9 @@ const CartModal: React.FC<CartModalProps> = ({ isOpen, cart, lang, onClose, onUp
                     {item.selectedAddons.length > 0 && (
                       <p className="text-sm text-text-secondary">{t(lang, "addons")} {item.selectedAddons.map((a) => lang === "en" && a.name_en ? a.name_en : lang === "zh" && a.name_zh ? a.name_zh : a.name).join(", ")}</p>
                     )}
+                    {item.selectedSpicyLevel && (
+                      <p className="text-sm text-red-500">🌶 {item.selectedSpicyLevel}</p>
+                    )}
                     {item.specialInstructions && (
                       <p className="text-sm text-orange-500 italic">"{item.specialInstructions}"</p>
                     )}
@@ -516,7 +521,7 @@ interface ItemCustomizationModalProps {
   item: MenuItem | null;
   lang: Language;
   onClose: () => void;
-  onAdd: (item: MenuItem, selectedSize?: any, selectedAddons?: any[], specialInstructions?: string) => void;
+  onAdd: (item: MenuItem, selectedSize?: any, selectedAddons?: any[], specialInstructions?: string, selectedSpicyLevel?: string) => void;
   getItemName: (item: MenuItem, lang: Language) => string;
   getItemDesc: (item: MenuItem, lang: Language) => string | undefined;
 }
@@ -525,6 +530,7 @@ const ItemCustomizationModal: React.FC<ItemCustomizationModalProps> = ({ isOpen,
   const [selectedSize, setSelectedSize] = useState<any>(null);
   const [selectedAddons, setSelectedAddons] = useState<any[]>([]);
   const [specialInstructions, setSpecialInstructions] = useState("");
+  const [selectedSpicyLevel, setSelectedSpicyLevel] = useState<string>("");
 
   const sortedSizes = item?.sizes ? [...item.sizes].sort((a, b) => a.price - b.price) : [];
 
@@ -532,6 +538,7 @@ const ItemCustomizationModal: React.FC<ItemCustomizationModalProps> = ({ isOpen,
     if (sortedSizes.length > 0) setSelectedSize(sortedSizes[0]);
     setSelectedAddons([]);
     setSpecialInstructions("");
+    setSelectedSpicyLevel("");
   }, [item]);
 
   if (!item) return null;
@@ -604,6 +611,26 @@ const ItemCustomizationModal: React.FC<ItemCustomizationModalProps> = ({ isOpen,
           </div>
         )}
 
+        {/* Spicy level */}
+        {item.has_spicy_level && (
+          <div>
+            <h4 className="font-semibold text-text mb-3">{t(lang, "spicyLevel")}</h4>
+            <div className="space-y-2">
+              {getSpicyLevels(lang).map((level) => (
+                <button
+                  key={level}
+                  onClick={() => setSelectedSpicyLevel(selectedSpicyLevel === level ? "" : level)}
+                  className={`w-full flex items-center justify-between p-3 rounded-lg border-2 transition-colors ${
+                    selectedSpicyLevel === level ? "border-red-500 bg-red-50" : "border-border hover:border-red-300"
+                  }`}
+                >
+                  <span className={`font-medium ${selectedSpicyLevel === level ? "text-red-600" : "text-text"}`}>{level}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Special instructions */}
         <div>
           <label className="block text-sm font-semibold text-text mb-2">{t(lang, "specialInstructions")}</label>
@@ -621,7 +648,7 @@ const ItemCustomizationModal: React.FC<ItemCustomizationModalProps> = ({ isOpen,
             <span>{t(lang, "total")}</span>
             <span>{formatCurrency(calculateTotal())}</span>
           </div>
-          <Button onClick={() => onAdd(item, selectedSize, selectedAddons, specialInstructions)} fullWidth size="lg">
+          <Button onClick={() => onAdd(item, selectedSize, selectedAddons, specialInstructions, selectedSpicyLevel)} fullWidth size="lg">
             {t(lang, "addToCart")}
           </Button>
         </div>
@@ -682,6 +709,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, cart, restaurantI
         selected_addons: item.selectedAddons,
         item_total: item.itemTotal,
         special_instructions: item.specialInstructions || undefined,
+        spicy_level: item.selectedSpicyLevel || undefined,
       })),
       subtotal,
       tax,

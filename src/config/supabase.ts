@@ -73,10 +73,11 @@ export interface MenuItem {
   description_zh?: string;
   base_price: number;
   category?: string;
-  image_url?: string;
+  image_url?: string | null;
   is_available: boolean;
   sizes?: { name: string; name_en?: string; name_zh?: string; price: number }[];
   addons?: { name: string; name_en?: string; name_zh?: string; price: number }[];
+  has_spicy_level?: boolean;
   created_at: string;
 }
 

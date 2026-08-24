@@ -339,6 +339,7 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
     base_price: "",
     image_url: "",
     is_available: true,
+    has_spicy_level: false,
     sizes: [] as { name: string; name_en?: string; name_zh?: string; price: number }[],
     addons: [] as { name: string; name_en?: string; name_zh?: string; price: number }[],
   });
@@ -362,6 +363,7 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
         base_price: item.base_price.toString(),
         image_url: item.image_url || "",
         is_available: item.is_available,
+        has_spicy_level: item.has_spicy_level || false,
         sizes: item.sizes && item.sizes.length > 0 ? item.sizes : [{ name: "ปกติ", price: 0 }],
         addons: item.addons || [],
       });
@@ -378,6 +380,7 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
         base_price: copyFrom ? copyFrom.base_price.toString() : "",
         image_url: "",
         is_available: true,
+        has_spicy_level: copyFrom?.has_spicy_level || false,
         sizes: copyFrom?.sizes || [{ name: "ปกติ", price: 0 }],
         addons: copyFrom?.addons || [],
       });
@@ -425,6 +428,7 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
       base_price: parseFloat(formData.base_price),
       image_url: finalImageUrl,
       is_available: formData.is_available,
+      has_spicy_level: formData.has_spicy_level,
       sizes: formData.sizes.length > 0 ? formData.sizes : undefined,
       addons: formData.addons.length > 0 ? formData.addons : undefined,
     };
@@ -696,6 +700,16 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
             className="rounded border-border"
           />
           <span className="text-text">Available for ordering</span>
+        </label>
+
+        <label className="flex items-center space-x-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={formData.has_spicy_level}
+            onChange={(e) => setFormData({ ...formData, has_spicy_level: e.target.checked })}
+            className="rounded border-border"
+          />
+          <span className="text-text">เปิดให้เลือกระดับความเผ็ด</span>
         </label>
 
         <div className="flex gap-3">

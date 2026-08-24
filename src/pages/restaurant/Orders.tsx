@@ -310,6 +310,9 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ isOpen, order, on
                       ท็อปปิ้ง: {item.selected_addons.map((a: any) => a.name).join(", ")}
                     </p>
                   )}
+                  {item.spicy_level && (
+                    <p className="text-sm text-red-500">🌶 ความเผ็ด: {item.spicy_level}</p>
+                  )}
                   {item.special_instructions && (
                     <p className="text-sm text-orange-500 italic">หมายเหตุ: {item.special_instructions}</p>
                   )}

@@ -62,6 +62,7 @@ ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS name_zh TEXT;
 ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS description_en TEXT;
 ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS description_zh TEXT;
 ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS category TEXT;
+ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS has_spicy_level BOOLEAN DEFAULT FALSE;
 
 
 -- =====================================================

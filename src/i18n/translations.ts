@@ -44,6 +44,8 @@ export const translations = {
     enterPhone: "กรุณากรอกหมายเลขโทรศัพท์ที่ถูกต้อง",
     enterTable: "กรุณากรอกหมายเลขโต๊ะ",
     noItems: "ไม่พบรายการอาหาร",
+    spicyLevel: "ระดับความเผ็ด",
+    spicyLevels: ["ไม่เผ็ด", "เผ็ดน้อย", "เผ็ดกลาง", "เผ็ดมาก", "เผ็ดมากที่สุด"],
   },
   en: {
     searchPlaceholder: "Search for dishes",
@@ -88,6 +90,8 @@ export const translations = {
     enterPhone: "Please enter a valid phone number",
     enterTable: "Please enter table number",
     noItems: "No items found",
+    spicyLevel: "Spicy Level",
+    spicyLevels: ["Not Spicy", "Mild", "Medium", "Hot", "Extra Hot"],
   },
   zh: {
     searchPlaceholder: "搜索菜品",
@@ -132,11 +136,17 @@ export const translations = {
     enterPhone: "请输入有效的电话号码",
     enterTable: "请输入桌号",
     noItems: "未找到菜品",
+    spicyLevel: "辣度",
+    spicyLevels: ["不辣", "微辣", "中辣", "辣", "特辣"],
   },
 };
 
 export type TranslationKey = keyof typeof translations.en;
 
 export const t = (lang: Language, key: TranslationKey): string => {
-  return translations[lang][key] ?? translations.en[key];
+  const val = translations[lang][key] ?? translations.en[key];
+  return Array.isArray(val) ? "" : val;
 };
+
+export const getSpicyLevels = (lang: Language): string[] =>
+  translations[lang].spicyLevels as string[];
