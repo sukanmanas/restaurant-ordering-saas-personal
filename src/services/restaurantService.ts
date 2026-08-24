@@ -150,6 +150,21 @@ export const deleteMenuItem = async (itemId: string) => {
   return !error;
 };
 
+export const uploadMenuImage = async (file: File): Promise<string | null> => {
+  const ext = file.name.split(".").pop();
+  const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+
+  const { error } = await supabase.storage.from("menu-images").upload(path, file, {
+    cacheControl: "3600",
+    upsert: false,
+  });
+
+  if (error) return null;
+
+  const { data } = supabase.storage.from("menu-images").getPublicUrl(path);
+  return data.publicUrl;
+};
+
 // Create order (manual or from customer)
 export const createOrder = async (order: Partial<Order>) => {
   const { data, error } = await supabase

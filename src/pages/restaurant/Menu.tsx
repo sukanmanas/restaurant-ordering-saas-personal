@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Plus, Edit, Trash2, Eye, EyeOff, Search, Package, Copy } from "lucide-react";
+import { Plus, Edit, Trash2, Eye, EyeOff, Search, Package, Copy, ImagePlus, X } from "lucide-react";
 import {
   Card,
   Button,
@@ -16,6 +16,7 @@ import {
   updateMenuItem,
   deleteMenuItem,
   toggleMenuItemAvailability,
+  uploadMenuImage,
 } from "../../services/restaurantService";
 import type { MenuItem } from "../../config/supabase";
 import { formatCurrency } from "../../utils/helpers";
@@ -344,8 +345,11 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
 
   const [newSize, setNewSize] = useState({ name: "", price: "" });
   const [newAddon, setNewAddon] = useState({ name: "", price: "" });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
 
   useEffect(() => {
+    setImageFile(null);
     if (mode === "edit" && item) {
       setFormData({
         name: item.name,
@@ -361,6 +365,7 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
         sizes: item.sizes && item.sizes.length > 0 ? item.sizes : [{ name: "ปกติ", price: 0 }],
         addons: item.addons || [],
       });
+      setImagePreview(item.image_url || "");
     } else {
       setFormData({
         name: "",
@@ -376,6 +381,7 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
         sizes: copyFrom?.sizes || [{ name: "ปกติ", price: 0 }],
         addons: copyFrom?.addons || [],
       });
+      setImagePreview("");
     }
   }, [mode, item, copyFrom, isOpen]);
 
@@ -396,6 +402,17 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
 
     setLoading(true);
 
+    let finalImageUrl = formData.image_url || undefined;
+    if (imageFile) {
+      const uploaded = await uploadMenuImage(imageFile);
+      if (uploaded) finalImageUrl = uploaded;
+      else {
+        setError("อัปโหลดรูปภาพไม่สำเร็จ กรุณาลองใหม่");
+        setLoading(false);
+        return;
+      }
+    }
+
     const menuItemData = {
       restaurant_id: user.restaurant_id,
       name: formData.name,
@@ -406,7 +423,7 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
       description_zh: formData.description_zh || undefined,
       category: formData.category || undefined,
       base_price: parseFloat(formData.base_price),
-      image_url: formData.image_url || undefined,
+      image_url: finalImageUrl,
       is_available: formData.is_available,
       sizes: formData.sizes.length > 0 ? formData.sizes : undefined,
       addons: formData.addons.length > 0 ? formData.addons : undefined,
@@ -550,14 +567,65 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
           />
         </div>
 
-        <Input
-          label="ลิงก์รูปภาพ (ไม่บังคับ)"
-          value={formData.image_url}
-          onChange={(e) =>
-            setFormData({ ...formData, image_url: e.target.value })
-          }
-          placeholder="https://example.com/image.jpg"
-        />
+        {/* Image */}
+        <div className="space-y-3">
+          <label className="label">รูปภาพ (ไม่บังคับ)</label>
+
+          {/* Preview */}
+          {imagePreview && (
+            <div className="relative w-full h-40 rounded-lg overflow-hidden border border-border">
+              <img src={imagePreview} alt="preview" className="w-full h-full object-cover" />
+              <button
+                type="button"
+                onClick={() => {
+                  setImageFile(null);
+                  setImagePreview("");
+                  setFormData({ ...formData, image_url: "" });
+                }}
+                className="absolute top-2 right-2 bg-white rounded-full p-1 shadow hover:bg-error/10"
+              >
+                <X className="w-4 h-4 text-error" />
+              </button>
+            </div>
+          )}
+
+          {/* Upload */}
+          <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-accent hover:bg-accent/5 transition-colors">
+            <ImagePlus className="w-6 h-6 text-text-secondary mb-1" />
+            <span className="text-sm text-text-secondary">อัปโหลดรูปภาพ</span>
+            <span className="text-xs text-text-secondary">PNG, JPG ไม่เกิน 5MB</span>
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                setImageFile(file);
+                setImagePreview(URL.createObjectURL(file));
+                setFormData({ ...formData, image_url: "" });
+              }}
+            />
+          </label>
+
+          {/* Divider */}
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-px bg-border" />
+            <span className="text-xs text-text-secondary">หรือใส่ลิงก์</span>
+            <div className="flex-1 h-px bg-border" />
+          </div>
+
+          {/* URL input */}
+          <Input
+            value={formData.image_url}
+            onChange={(e) => {
+              setFormData({ ...formData, image_url: e.target.value });
+              setImageFile(null);
+              setImagePreview(e.target.value);
+            }}
+            placeholder="https://drive.google.com/uc?export=view&id=..."
+          />
+        </div>
 
         {/* Sizes */}
         <div>
