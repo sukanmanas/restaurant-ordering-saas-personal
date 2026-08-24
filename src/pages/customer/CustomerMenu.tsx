@@ -214,19 +214,19 @@ const CustomerMenu: React.FC = () => {
               onClick={() => chooseLang("th")}
               className="w-full py-4 rounded-xl border-2 border-border hover:border-green-500 hover:bg-green-50 transition-colors font-semibold text-lg text-text"
             >
-              ภาษาไทย
+              🇹🇭 ภาษาไทย
             </button>
             <button
               onClick={() => chooseLang("en")}
               className="w-full py-4 rounded-xl border-2 border-border hover:border-green-500 hover:bg-green-50 transition-colors font-semibold text-lg text-text"
             >
-              English
+              🇬🇧 English
             </button>
             <button
               onClick={() => chooseLang("zh")}
               className="w-full py-4 rounded-xl border-2 border-border hover:border-green-500 hover:bg-green-50 transition-colors font-semibold text-lg text-text"
             >
-              中文
+              🇨🇳 中文
             </button>
           </div>
         </div>
