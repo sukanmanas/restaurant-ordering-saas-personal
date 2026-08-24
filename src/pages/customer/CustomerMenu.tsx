@@ -59,6 +59,9 @@ const CustomerMenu: React.FC = () => {
   const [lang, setLang] = useState<Language>(
     () => (localStorage.getItem("menu_lang") as Language) || "th"
   );
+  const [showLangPicker, setShowLangPicker] = useState<boolean>(
+    () => !sessionStorage.getItem("lang_chosen")
+  );
   const [restaurant, setRestaurant] = useState<any>(null);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -73,6 +76,12 @@ const CustomerMenu: React.FC = () => {
   const changeLang = (l: Language) => {
     setLang(l);
     localStorage.setItem("menu_lang", l);
+  };
+
+  const chooseLang = (l: Language) => {
+    changeLang(l);
+    sessionStorage.setItem("lang_chosen", "1");
+    setShowLangPicker(false);
   };
 
   useEffect(() => {
@@ -185,6 +194,42 @@ const CustomerMenu: React.FC = () => {
           <h2 className="text-2xl font-bold text-text mb-2">{t(lang, "restaurantNotFound")}</h2>
           <p className="text-text-secondary">{t(lang, "restaurantNotFoundDesc")}</p>
         </Card>
+      </div>
+    );
+  }
+
+  if (showLangPicker) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
+        <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl p-8 text-center space-y-6">
+          {restaurant?.logo_url && (
+            <img src={restaurant.logo_url} alt={restaurant?.name} className="w-20 h-20 object-cover rounded-full mx-auto" />
+          )}
+          <div>
+            <h1 className="text-2xl font-bold text-text">{restaurant?.name || "ยินดีต้อนรับ"}</h1>
+            <p className="text-text-secondary mt-1">กรุณาเลือกภาษา / Please select language / 请选择语言</p>
+          </div>
+          <div className="space-y-3">
+            <button
+              onClick={() => chooseLang("th")}
+              className="w-full py-4 rounded-xl border-2 border-border hover:border-green-500 hover:bg-green-50 transition-colors font-semibold text-lg text-text"
+            >
+              🇹🇭 ภาษาไทย
+            </button>
+            <button
+              onClick={() => chooseLang("en")}
+              className="w-full py-4 rounded-xl border-2 border-border hover:border-green-500 hover:bg-green-50 transition-colors font-semibold text-lg text-text"
+            >
+              🇬🇧 English
+            </button>
+            <button
+              onClick={() => chooseLang("zh")}
+              className="w-full py-4 rounded-xl border-2 border-border hover:border-green-500 hover:bg-green-50 transition-colors font-semibold text-lg text-text"
+            >
+              🇨🇳 中文
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
