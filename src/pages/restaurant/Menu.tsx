@@ -402,7 +402,7 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
 
     setLoading(true);
 
-    let finalImageUrl = formData.image_url || undefined;
+    let finalImageUrl: string | null = formData.image_url || null;
     if (imageFile) {
       const uploaded = await uploadMenuImage(imageFile);
       if (uploaded) finalImageUrl = uploaded;
