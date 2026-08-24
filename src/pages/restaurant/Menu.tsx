@@ -336,6 +336,8 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
     description_en: "",
     description_zh: "",
     category: "",
+    category_en: "",
+    category_zh: "",
     base_price: "",
     image_url: "",
     is_available: true,
@@ -360,6 +362,8 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
         description_en: item.description_en || "",
         description_zh: item.description_zh || "",
         category: item.category || "",
+        category_en: item.category_en || "",
+        category_zh: item.category_zh || "",
         base_price: item.base_price.toString(),
         image_url: item.image_url || "",
         is_available: item.is_available,
@@ -377,6 +381,8 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
         description_en: "",
         description_zh: "",
         category: copyFrom?.category || "",
+        category_en: copyFrom?.category_en || "",
+        category_zh: copyFrom?.category_zh || "",
         base_price: copyFrom ? copyFrom.base_price.toString() : "",
         image_url: "",
         is_available: true,
@@ -425,6 +431,8 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
       description_en: formData.description_en || undefined,
       description_zh: formData.description_zh || undefined,
       category: formData.category || undefined,
+      category_en: formData.category_en || undefined,
+      category_zh: formData.category_zh || undefined,
       base_price: parseFloat(formData.base_price),
       image_url: finalImageUrl,
       is_available: formData.is_available,
@@ -558,28 +566,39 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
           </div>
         </div>
 
-        <div className="grid sm:grid-cols-2 gap-4">
-          <Input
-            label="หมวดหมู่"
-            value={formData.category}
-            onChange={(e) =>
-              setFormData({ ...formData, category: e.target.value })
-            }
-            placeholder="e.g., Pizza, Burgers"
-          />
-
-          <Input
-            label="ราคา (฿)"
-            type="number"
-            step="0.01"
-            value={formData.base_price}
-            onChange={(e) =>
-              setFormData({ ...formData, base_price: e.target.value })
-            }
-            placeholder="0.00"
-            required
-          />
+        <div className="border border-border rounded-lg p-4 space-y-3">
+          <p className="text-sm font-semibold text-text">หมวดหมู่</p>
+          <div className="grid sm:grid-cols-3 gap-3">
+            <Input
+              label="ไทย"
+              value={formData.category}
+              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+              placeholder="เช่น อาหารจานหลัก"
+            />
+            <Input
+              label="English"
+              value={formData.category_en}
+              onChange={(e) => setFormData({ ...formData, category_en: e.target.value })}
+              placeholder="e.g., Main Course"
+            />
+            <Input
+              label="中文"
+              value={formData.category_zh}
+              onChange={(e) => setFormData({ ...formData, category_zh: e.target.value })}
+              placeholder="例如：主菜"
+            />
+          </div>
         </div>
+
+        <Input
+          label="ราคา (฿)"
+          type="number"
+          step="0.01"
+          value={formData.base_price}
+          onChange={(e) => setFormData({ ...formData, base_price: e.target.value })}
+          placeholder="0.00"
+          required
+        />
 
         {/* Image */}
         <div className="space-y-3">

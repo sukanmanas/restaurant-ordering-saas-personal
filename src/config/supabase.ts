@@ -73,6 +73,8 @@ export interface MenuItem {
   description_zh?: string;
   base_price: number;
   category?: string;
+  category_en?: string;
+  category_zh?: string;
   image_url?: string | null;
   is_available: boolean;
   sizes?: { name: string; name_en?: string; name_zh?: string; price: number }[];

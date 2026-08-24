@@ -115,16 +115,28 @@ const CustomerMenu: React.FC = () => {
     setRestaurant(data);
   };
 
-  const categories = [
-    "all",
-    ...new Set(menuItems.map((item) => item.category).filter(Boolean)),
-  ];
+  // Build unique categories keyed by Thai name, with EN/ZH translations from first matching item
+  const categoryMap = new Map<string, { th: string; en?: string; zh?: string }>();
+  menuItems.forEach((item) => {
+    if (item.category && !categoryMap.has(item.category)) {
+      categoryMap.set(item.category, { th: item.category, en: item.category_en, zh: item.category_zh });
+    }
+  });
+  const categories = [{ th: "all" as const }, ...Array.from(categoryMap.values())];
+
+  const getCategoryLabel = (cat: { th: string; en?: string; zh?: string }) => {
+    if (cat.th === "all") return t(lang, "allCategory");
+    if (lang === "en" && cat.en) return cat.en;
+    if (lang === "zh" && cat.zh) return cat.zh;
+    return cat.th;
+  };
 
   const filteredItems = menuItems.filter((item) => {
     const name = getItemName(item, lang).toLowerCase();
     const matchesSearch = name.includes(searchTerm.toLowerCase());
     const matchesCategory =
       categoryFilter === "all" || item.category === categoryFilter;
+
     return matchesSearch && matchesCategory && item.is_available;
   });
 
@@ -293,15 +305,15 @@ const CustomerMenu: React.FC = () => {
           <div className="flex gap-2 overflow-x-auto py-2 scrollbar-hide">
             {categories.map((category) => (
               <button
-                key={category}
-                onClick={() => setCategoryFilter(category || "all")}
+                key={category.th}
+                onClick={() => setCategoryFilter(category.th)}
                 className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap ${
-                  categoryFilter === category
+                  categoryFilter === category.th
                     ? "bg-accent text-white"
                     : "bg-gray-100 text-gray-600"
                 }`}
               >
-                {category === "all" ? t(lang, "allCategory") : category}
+                {getCategoryLabel(category)}
               </button>
             ))}
           </div>
