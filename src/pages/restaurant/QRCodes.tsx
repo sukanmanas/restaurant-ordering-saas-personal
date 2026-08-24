@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { Download, Printer } from "lucide-react";
-import { Card, Button, Input } from "../../components/ui";
+import { Card, Button } from "../../components/ui";
 
 const BASE_URL = window.location.origin;
 const SLUG = "krua-pa-toi";
@@ -93,20 +93,21 @@ const QRCodes: React.FC = () => {
       </div>
 
       {/* Table count input */}
-      <Card className="flex items-end gap-4 p-4">
+      <div className="bg-white rounded-xl border border-border p-4 flex items-end gap-4">
         <div className="flex-1">
-          <Input
-            label="จำนวนโต๊ะ"
+          <label className="label mb-1">จำนวนโต๊ะ</label>
+          <input
             type="number"
             min="1"
             max="50"
             value={tableCount}
             onChange={(e) => setTableCount(e.target.value)}
             placeholder="เช่น 10"
+            className="input-field"
           />
         </div>
         <Button onClick={handleApply}>สร้าง QR</Button>
-      </Card>
+      </div>
 
       {/* General QR */}
       <div>
