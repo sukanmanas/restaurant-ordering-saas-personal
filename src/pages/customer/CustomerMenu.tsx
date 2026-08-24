@@ -654,10 +654,10 @@ const ItemCustomizationModal: React.FC<ItemCustomizationModalProps> = ({ isOpen,
                   key={level}
                   onClick={() => setSelectedSpicyLevel(selectedSpicyLevel === level ? "" : level)}
                   className={`w-full flex items-center justify-between p-3 rounded-lg border-2 transition-colors ${
-                    selectedSpicyLevel === level ? "border-red-500 bg-red-50" : "border-border hover:border-red-300"
+                    selectedSpicyLevel === level ? "border-green-500 bg-green-50" : "border-border hover:border-green-300"
                   }`}
                 >
-                  <span className={`font-medium ${selectedSpicyLevel === level ? "text-red-600" : "text-text"}`}>{level}</span>
+                  <span className={`font-medium ${selectedSpicyLevel === level ? "text-green-600" : "text-text"}`}>{level}</span>
                 </button>
               ))}
             </div>
