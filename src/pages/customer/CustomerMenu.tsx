@@ -118,7 +118,7 @@ const CustomerMenu: React.FC = () => {
   });
 
   const addToCart = (item: MenuItem, selectedSize?: any, selectedAddons: any[] = []) => {
-    const basePrice = selectedSize ? selectedSize.price : item.base_price;
+    const basePrice = item.base_price + (selectedSize ? selectedSize.price : 0);
     const addonsTotal = selectedAddons.reduce((sum, addon) => sum + addon.price, 0);
     const itemTotal = basePrice + addonsTotal;
 
@@ -299,7 +299,7 @@ const CustomerMenu: React.FC = () => {
                     <div className="flex items-end justify-between mt-2">
                       <p className="font-bold text-gray-800">
                         {item.sizes && item.sizes.length > 0
-                          ? formatCurrency(Math.min(...item.sizes.map((s) => s.price)))
+                          ? formatCurrency(item.base_price + Math.min(...item.sizes.map((s) => s.price)))
                           : formatCurrency(item.base_price)}
                       </p>
                       {item.is_available && (
@@ -491,7 +491,7 @@ const ItemCustomizationModal: React.FC<ItemCustomizationModalProps> = ({ isOpen,
   };
 
   const calculateTotal = () => {
-    const basePrice = selectedSize ? selectedSize.price : item.base_price;
+    const basePrice = item.base_price + (selectedSize ? selectedSize.price : 0);
     return basePrice + selectedAddons.reduce((sum, addon) => sum + addon.price, 0);
   };
 
@@ -518,7 +518,9 @@ const ItemCustomizationModal: React.FC<ItemCustomizationModalProps> = ({ isOpen,
                   }`}
                 >
                   <span className="font-medium text-text">{size.name}</span>
-                  <span className="text-accent font-semibold">{formatCurrency(size.price)}</span>
+                  <span className="text-accent font-semibold">
+                    {size.price === 0 ? formatCurrency(item.base_price) : `${formatCurrency(item.base_price)} +${formatCurrency(size.price)}`}
+                  </span>
                 </button>
               ))}
             </div>
