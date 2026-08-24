@@ -339,8 +339,8 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
     base_price: "",
     image_url: "",
     is_available: true,
-    sizes: [] as { name: string; price: number }[],
-    addons: [] as { name: string; price: number }[],
+    sizes: [] as { name: string; name_en?: string; name_zh?: string; price: number }[],
+    addons: [] as { name: string; name_en?: string; name_zh?: string; price: number }[],
   });
 
   const [newSize, setNewSize] = useState({ name: "", name_en: "", name_zh: "", price: "" });
