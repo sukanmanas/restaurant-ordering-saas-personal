@@ -22,7 +22,7 @@ import {
   createOrder,
 } from "../../services/restaurantService";
 import type { MenuItem } from "../../config/supabase";
-import { formatCurrency, isValidPhone } from "../../utils/helpers";
+import { formatCurrency } from "../../utils/helpers";
 import { supabase } from "../../config/supabase";
 import { type Language, t, getSpicyLevels } from "../../i18n/translations";
 
@@ -691,8 +691,6 @@ interface CheckoutModalProps {
 }
 
 const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, cart, restaurantId, lang, tableFromUrl, onClose, onSuccess, getItemName }) => {
-  const [customerName, setCustomerName] = useState("");
-  const [customerPhone, setCustomerPhone] = useState("");
   const [orderType, setOrderType] = useState<"table" | "takeaway">(tableFromUrl ? "table" : "table");
   const [tableNumber, setTableNumber] = useState(tableFromUrl);
   const [notes, setNotes] = useState("");
@@ -700,16 +698,12 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, cart, restaurantI
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
-  const subtotal = cart.reduce((sum, item) => sum + item.itemTotal * item.quantity, 0);
-  const tax = subtotal * 0.07;
-  const total = subtotal + tax;
+  const total = cart.reduce((sum, item) => sum + item.itemTotal * item.quantity, 0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    if (!customerName.trim()) { setError(t(lang, "enterName")); return; }
-    if (!isValidPhone(customerPhone)) { setError(t(lang, "enterPhone")); return; }
     if (orderType === "table" && !tableNumber.trim()) { setError(t(lang, "enterTable")); return; }
 
     setLoading(true);
@@ -718,8 +712,6 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, cart, restaurantI
       restaurant_id: restaurantId,
       order_type: (orderType === "table" ? "qr" : "counter") as "qr" | "counter",
       table_number: orderType === "table" ? tableNumber : undefined,
-      customer_name: customerName,
-      customer_phone: customerPhone,
       items: cart.map((item) => ({
         menu_item_id: item.id,
         name: item.name,
@@ -732,8 +724,8 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, cart, restaurantI
         special_instructions: item.specialInstructions || undefined,
         spicy_level: item.selectedSpicyLevel || undefined,
       })),
-      subtotal,
-      tax,
+      subtotal: total,
+      tax: 0,
       total,
       customer_notes: notes,
     };
@@ -750,7 +742,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, cart, restaurantI
   };
 
   const resetForm = () => {
-    setCustomerName(""); setCustomerPhone(""); setTableNumber(tableFromUrl);
+    setTableNumber(tableFromUrl);
     setNotes(""); setOrderType(tableFromUrl ? "table" : "table"); setSuccess(false);
   };
 
@@ -817,24 +809,6 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, cart, restaurantI
           </>
         )}
 
-        <Input
-          label={t(lang, "yourName")}
-          value={customerName}
-          onChange={(e) => setCustomerName(e.target.value)}
-          placeholder={t(lang, "yourNamePlaceholder")}
-          required
-        />
-
-        <Input
-          label={t(lang, "phoneNumber")}
-          type="tel"
-          value={customerPhone}
-          onChange={(e) => setCustomerPhone(e.target.value)}
-          placeholder={t(lang, "phonePlaceholder")}
-          required
-          helperText={t(lang, "phoneHelper")}
-        />
-
         <div>
           <label className="label mb-2">{t(lang, "specialInstructions")}</label>
           <textarea
@@ -857,16 +831,8 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, cart, restaurantI
               <span className="text-text">{formatCurrency(item.itemTotal * item.quantity)}</span>
             </div>
           ))}
-          <div className="border-t border-border pt-2 mt-2 space-y-1">
-            <div className="flex justify-between text-text-secondary">
-              <span>{t(lang, "subtotal")}</span>
-              <span>{formatCurrency(subtotal)}</span>
-            </div>
-            <div className="flex justify-between text-text-secondary">
-              <span>{t(lang, "tax")}</span>
-              <span>{formatCurrency(tax)}</span>
-            </div>
-            <div className="flex justify-between text-xl font-bold text-text pt-2 border-t border-border">
+          <div className="border-t border-border pt-2 mt-2">
+            <div className="flex justify-between text-xl font-bold text-text pt-2">
               <span>{t(lang, "total")}</span>
               <span>{formatCurrency(total)}</span>
             </div>

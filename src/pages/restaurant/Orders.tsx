@@ -323,22 +323,8 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ isOpen, order, on
           </div>
         </div>
 
-        <div className="border-t border-border pt-4 space-y-2">
-          <div className="flex justify-between text-text-secondary">
-            <span>ยอดรวม</span>
-            <span>{formatCurrency(order.subtotal)}</span>
-          </div>
-          <div className="flex justify-between text-text-secondary">
-            <span>ภาษี</span>
-            <span>{formatCurrency(order.tax)}</span>
-          </div>
-          {order.discount && order.discount > 0 && (
-            <div className="flex justify-between text-success">
-              <span>ส่วนลด</span>
-              <span>-{formatCurrency(order.discount)}</span>
-            </div>
-          )}
-          <div className="flex justify-between text-lg font-bold text-text pt-2 border-t border-border">
+        <div className="border-t border-border pt-4">
+          <div className="flex justify-between text-lg font-bold text-text pt-2">
             <span>รวมทั้งหมด</span>
             <span>{formatCurrency(order.total)}</span>
           </div>
