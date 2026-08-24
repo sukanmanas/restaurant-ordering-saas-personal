@@ -358,7 +358,7 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
         base_price: item.base_price.toString(),
         image_url: item.image_url || "",
         is_available: item.is_available,
-        sizes: item.sizes || [],
+        sizes: item.sizes && item.sizes.length > 0 ? item.sizes : [{ name: "ปกติ", price: 0 }],
         addons: item.addons || [],
       });
     } else {
