@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Plus, Edit, Trash2, Eye, EyeOff, Search, Package } from "lucide-react";
+import { Plus, Edit, Trash2, Eye, EyeOff, Search, Package, Copy } from "lucide-react";
 import {
   Card,
   Button,
@@ -29,6 +29,7 @@ const Menu: React.FC = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [copyFromItem, setCopyFromItem] = useState<MenuItem | null>(null);
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -65,6 +66,11 @@ const Menu: React.FC = () => {
   const handleEdit = (item: MenuItem) => {
     setSelectedItem(item);
     setShowEditModal(true);
+  };
+
+  const handleDuplicate = (item: MenuItem) => {
+    setCopyFromItem(item);
+    setShowAddModal(true);
   };
 
   const handleDelete = (item: MenuItem) => {
@@ -241,11 +247,20 @@ const Menu: React.FC = () => {
                   <Button
                     size="sm"
                     variant="outline"
+                    icon={<Copy className="w-4 h-4" />}
+                    onClick={() => handleDuplicate(item)}
+                    fullWidth
+                  >
+                    คัดลอก
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
                     icon={<Edit className="w-4 h-4" />}
                     onClick={() => handleEdit(item)}
                     fullWidth
                   >
-                    Edit
+                    แก้ไข
                   </Button>
                   <Button
                     size="sm"
@@ -266,8 +281,9 @@ const Menu: React.FC = () => {
       {/* Add/Edit Modals */}
       <MenuItemModal
         isOpen={showAddModal}
-        onClose={() => setShowAddModal(false)}
+        onClose={() => { setShowAddModal(false); setCopyFromItem(null); }}
         mode="add"
+        copyFrom={copyFromItem}
       />
 
       <MenuItemModal
@@ -297,6 +313,7 @@ const Menu: React.FC = () => {
 interface MenuItemModalProps {
   isOpen: boolean;
   item?: MenuItem | null;
+  copyFrom?: MenuItem | null;
   onClose: () => void;
   mode: "add" | "edit";
 }
@@ -304,6 +321,7 @@ interface MenuItemModalProps {
 const MenuItemModal: React.FC<MenuItemModalProps> = ({
   isOpen,
   item,
+  copyFrom,
   onClose,
   mode,
 }) => {
@@ -351,15 +369,15 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
         description: "",
         description_en: "",
         description_zh: "",
-        category: "",
-        base_price: "",
+        category: copyFrom?.category || "",
+        base_price: copyFrom ? copyFrom.base_price.toString() : "",
         image_url: "",
         is_available: true,
-        sizes: [],
-        addons: [],
+        sizes: copyFrom?.sizes || [],
+        addons: copyFrom?.addons || [],
       });
     }
-  }, [mode, item, isOpen]);
+  }, [mode, item, copyFrom, isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -454,7 +472,7 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={mode === "add" ? "เพิ่มเมนูใหม่" : "แก้ไขเมนู"}
+      title={mode === "edit" ? "แก้ไขเมนู" : copyFrom ? `คัดลอกจาก: ${copyFrom.name}` : "เพิ่มเมนูใหม่"}
       size="lg"
     >
       <form onSubmit={handleSubmit} className="space-y-6">
