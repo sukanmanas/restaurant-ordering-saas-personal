@@ -509,7 +509,10 @@ const ItemCustomizationModal: React.FC<ItemCustomizationModalProps> = ({ isOpen,
 
         {sortedSizes.length > 0 && (
           <div>
-            <h4 className="font-semibold text-text mb-3">{t(lang, "selectSize")}</h4>
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="font-semibold text-text">{t(lang, "selectSize")}</h4>
+              <span className="text-sm text-text-secondary">ราคาเริ่มต้น {formatCurrency(item.base_price)}</span>
+            </div>
             <div className="space-y-2">
               {sortedSizes.map((size) => (
                 <button
@@ -520,8 +523,8 @@ const ItemCustomizationModal: React.FC<ItemCustomizationModalProps> = ({ isOpen,
                   }`}
                 >
                   <span className="font-medium text-text">{size.name}</span>
-                  <span className="text-accent font-semibold">
-                    {size.price === 0 ? formatCurrency(item.base_price) : `${formatCurrency(item.base_price)} +${formatCurrency(size.price)}`}
+                  <span className="text-green-600 font-semibold">
+                    +{formatCurrency(size.price)}
                   </span>
                 </button>
               ))}
