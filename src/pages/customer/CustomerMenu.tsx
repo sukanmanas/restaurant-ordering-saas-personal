@@ -516,7 +516,7 @@ const ItemCustomizationModal: React.FC<ItemCustomizationModalProps> = ({ isOpen,
                   key={size.name}
                   onClick={() => setSelectedSize(size)}
                   className={`w-full flex items-center justify-between p-3 rounded-lg border-2 transition-colors ${
-                    selectedSize?.name === size.name ? "border-accent bg-accent/5" : "border-border hover:border-accent/50"
+                    selectedSize?.name === size.name ? "border-green-500 bg-green-50" : "border-border hover:border-green-300"
                   }`}
                 >
                   <span className="font-medium text-text">{size.name}</span>
@@ -538,7 +538,7 @@ const ItemCustomizationModal: React.FC<ItemCustomizationModalProps> = ({ isOpen,
                   key={addon.name}
                   onClick={() => toggleAddon(addon)}
                   className={`w-full flex items-center justify-between p-3 rounded-lg border-2 transition-colors ${
-                    selectedAddons.find((a) => a.name === addon.name) ? "border-accent bg-accent/5" : "border-border hover:border-accent/50"
+                    selectedAddons.find((a) => a.name === addon.name) ? "border-green-500 bg-green-50" : "border-border hover:border-green-300"
                   }`}
                 >
                   <span className="font-medium text-text">{addon.name}</span>
