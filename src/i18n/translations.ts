@@ -45,7 +45,7 @@ export const translations = {
     enterTable: "กรุณากรอกหมายเลขโต๊ะ",
     noItems: "ไม่พบรายการอาหาร",
     spicyLevel: "ระดับความเผ็ด",
-    spicyLevels: ["ไม่เผ็ด", "เผ็ดน้อย", "เผ็ดกลาง", "เผ็ดมาก", "เผ็ดมากที่สุด"],
+    spicyLevels: ["ไม่เผ็ด", "เผ็ดน้อย", "เผ็ดกลาง", "เผ็ดมาก"],
   },
   en: {
     searchPlaceholder: "Search for dishes",
@@ -91,7 +91,7 @@ export const translations = {
     enterTable: "Please enter table number",
     noItems: "No items found",
     spicyLevel: "Spicy Level",
-    spicyLevels: ["Not Spicy", "Mild", "Medium", "Hot", "Extra Hot"],
+    spicyLevels: ["Not Spicy", "Mild", "Medium", "Hot"],
   },
   zh: {
     searchPlaceholder: "搜索菜品",
@@ -137,7 +137,7 @@ export const translations = {
     enterTable: "请输入桌号",
     noItems: "未找到菜品",
     spicyLevel: "辣度",
-    spicyLevels: ["不辣", "微辣", "中辣", "辣", "特辣"],
+    spicyLevels: ["不辣", "微辣", "中辣", "辣"],
   },
 };
 
