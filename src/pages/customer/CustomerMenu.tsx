@@ -475,8 +475,10 @@ const ItemCustomizationModal: React.FC<ItemCustomizationModalProps> = ({ isOpen,
   const [selectedSize, setSelectedSize] = useState<any>(null);
   const [selectedAddons, setSelectedAddons] = useState<any[]>([]);
 
+  const sortedSizes = item?.sizes ? [...item.sizes].sort((a, b) => a.price - b.price) : [];
+
   useEffect(() => {
-    if (item?.sizes && item.sizes.length > 0) setSelectedSize(item.sizes[0]);
+    if (sortedSizes.length > 0) setSelectedSize(sortedSizes[0]);
     setSelectedAddons([]);
   }, [item]);
 
@@ -505,11 +507,11 @@ const ItemCustomizationModal: React.FC<ItemCustomizationModalProps> = ({ isOpen,
           <p className="text-text-secondary">{getItemDesc(item, lang)}</p>
         )}
 
-        {item.sizes && item.sizes.length > 0 && (
+        {sortedSizes.length > 0 && (
           <div>
             <h4 className="font-semibold text-text mb-3">{t(lang, "selectSize")}</h4>
             <div className="space-y-2">
-              {item.sizes.map((size) => (
+              {sortedSizes.map((size) => (
                 <button
                   key={size.name}
                   onClick={() => setSelectedSize(size)}
