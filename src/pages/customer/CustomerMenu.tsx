@@ -523,7 +523,7 @@ const ItemCustomizationModal: React.FC<ItemCustomizationModalProps> = ({ isOpen,
                   }`}
                 >
                   <span className="font-medium text-text">{size.name}</span>
-                  <span className="text-green-600 font-semibold">
+                  <span className={`font-semibold ${selectedSize?.name === size.name ? "text-green-600" : "text-text-secondary"}`}>
                     +{formatCurrency(size.price)}
                   </span>
                 </button>
