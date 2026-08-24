@@ -301,7 +301,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ isOpen, order, on
             {order.items?.map((item: any, index: number) => (
               <div key={index} className="flex items-start justify-between p-3 bg-bg-subtle rounded-lg">
                 <div className="flex-1">
-                  <p className="font-medium text-text">{item.quantity}x {item.name}</p>
+                  <p className="font-medium text-text">{item.quantity}x {item.name_th || item.name}</p>
                   {item.selected_size && (
                     <p className="text-sm text-text-secondary">ขนาด: {item.selected_size.name}</p>
                   )}

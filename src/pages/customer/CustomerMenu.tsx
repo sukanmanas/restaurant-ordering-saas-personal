@@ -611,6 +611,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, cart, restaurantI
       items: cart.map((item) => ({
         menu_item_id: item.id,
         name: item.name,
+        name_th: item.name,
         quantity: item.quantity,
         base_price: item.base_price,
         selected_size: item.selectedSize,
