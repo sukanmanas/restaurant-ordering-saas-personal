@@ -29,7 +29,7 @@ import { type Language, t, getSpicyLevels } from "../../i18n/translations";
 interface CartItem extends MenuItem {
   quantity: number;
   selectedSize?: { name: string; name_en?: string; name_zh?: string; price: number };
-  selectedAddons: { name: string; name_en?: string; name_zh?: string; price: number }[];
+  selectedAddons: { name: string; name_en?: string; name_zh?: string; price: number; quantity: number }[];
   itemTotal: number;
   specialInstructions?: string;
   selectedSpicyLevel?: string;
@@ -130,7 +130,7 @@ const CustomerMenu: React.FC = () => {
 
   const addToCart = (item: MenuItem, selectedSize?: any, selectedAddons: any[] = [], specialInstructions?: string, selectedSpicyLevel?: string) => {
     const basePrice = item.base_price + (selectedSize ? selectedSize.price : 0);
-    const addonsTotal = selectedAddons.reduce((sum, addon) => sum + addon.price, 0);
+    const addonsTotal = selectedAddons.reduce((sum, addon) => sum + addon.price * (addon.quantity || 1), 0);
     const itemTotal = basePrice + addonsTotal;
 
     const cartItem: CartItem = { ...item, quantity: 1, selectedSize, selectedAddons, itemTotal, specialInstructions: specialInstructions || undefined, selectedSpicyLevel: selectedSpicyLevel || undefined };
@@ -476,7 +476,7 @@ const CartModal: React.FC<CartModalProps> = ({ isOpen, cart, lang, onClose, onUp
                       <p className="text-sm text-text-secondary">{t(lang, "size")} {lang === "en" && item.selectedSize.name_en ? item.selectedSize.name_en : lang === "zh" && item.selectedSize.name_zh ? item.selectedSize.name_zh : item.selectedSize.name}</p>
                     )}
                     {item.selectedAddons.length > 0 && (
-                      <p className="text-sm text-text-secondary">{t(lang, "addons")} {item.selectedAddons.map((a) => lang === "en" && a.name_en ? a.name_en : lang === "zh" && a.name_zh ? a.name_zh : a.name).join(", ")}</p>
+                      <p className="text-sm text-text-secondary">{t(lang, "addons")} {item.selectedAddons.map((a) => `${lang === "en" && a.name_en ? a.name_en : lang === "zh" && a.name_zh ? a.name_zh : a.name}${a.quantity > 1 ? ` x${a.quantity}` : ""}`).join(", ")}</p>
                     )}
                     {item.selectedSpicyLevel && (
                       <p className="text-sm text-red-500">🌶 {item.selectedSpicyLevel}</p>
@@ -543,17 +543,25 @@ const ItemCustomizationModal: React.FC<ItemCustomizationModalProps> = ({ isOpen,
 
   if (!item) return null;
 
-  const toggleAddon = (addon: any) => {
-    if (selectedAddons.find((a) => a.name === addon.name)) {
+  const getAddonQty = (addonName: string) =>
+    selectedAddons.find((a) => a.name === addonName)?.quantity || 0;
+
+  const setAddonQty = (addon: any, delta: number) => {
+    const existing = selectedAddons.find((a) => a.name === addon.name);
+    const currentQty = existing?.quantity || 0;
+    const newQty = currentQty + delta;
+    if (newQty <= 0) {
       setSelectedAddons(selectedAddons.filter((a) => a.name !== addon.name));
+    } else if (existing) {
+      setSelectedAddons(selectedAddons.map((a) => a.name === addon.name ? { ...a, quantity: newQty } : a));
     } else {
-      setSelectedAddons([...selectedAddons, addon]);
+      setSelectedAddons([...selectedAddons, { ...addon, quantity: 1 }]);
     }
   };
 
   const calculateTotal = () => {
     const basePrice = item.base_price + (selectedSize ? selectedSize.price : 0);
-    return basePrice + selectedAddons.reduce((sum, addon) => sum + addon.price, 0);
+    return basePrice + selectedAddons.reduce((sum, addon) => sum + addon.price * addon.quantity, 0);
   };
 
   return (
@@ -595,18 +603,31 @@ const ItemCustomizationModal: React.FC<ItemCustomizationModalProps> = ({ isOpen,
           <div>
             <h4 className="font-semibold text-text mb-3">{t(lang, "addonsOptional")}</h4>
             <div className="space-y-2">
-              {item.addons.map((addon) => (
-                <button
-                  key={addon.name}
-                  onClick={() => toggleAddon(addon)}
-                  className={`w-full flex items-center justify-between p-3 rounded-lg border-2 transition-colors ${
-                    selectedAddons.find((a) => a.name === addon.name) ? "border-green-500 bg-green-50" : "border-border hover:border-green-300"
-                  }`}
-                >
-                  <span className="font-medium text-text">{lang === "en" && addon.name_en ? addon.name_en : lang === "zh" && addon.name_zh ? addon.name_zh : addon.name}</span>
-                  <span className="text-accent font-semibold">+{formatCurrency(addon.price)}</span>
-                </button>
-              ))}
+              {item.addons.map((addon) => {
+                const qty = getAddonQty(addon.name);
+                return (
+                  <div
+                    key={addon.name}
+                    className={`w-full flex items-center justify-between p-3 rounded-lg border-2 transition-colors ${
+                      qty > 0 ? "border-green-500 bg-green-50" : "border-border"
+                    }`}
+                  >
+                    <span className="font-medium text-text">{lang === "en" && addon.name_en ? addon.name_en : lang === "zh" && addon.name_zh ? addon.name_zh : addon.name}</span>
+                    <div className="flex items-center gap-3">
+                      <span className={`font-semibold ${qty > 0 ? "text-green-600" : "text-text-secondary"}`}>+{formatCurrency(addon.price)}</span>
+                      {qty > 0 ? (
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => setAddonQty(addon, -1)} className="w-7 h-7 rounded-full bg-green-100 hover:bg-green-200 flex items-center justify-center text-green-700 font-bold">−</button>
+                          <span className="w-5 text-center font-semibold text-text">{qty}</span>
+                          <button onClick={() => setAddonQty(addon, 1)} className="w-7 h-7 rounded-full bg-green-100 hover:bg-green-200 flex items-center justify-center text-green-700 font-bold">+</button>
+                        </div>
+                      ) : (
+                        <button onClick={() => setAddonQty(addon, 1)} className="w-7 h-7 rounded-full bg-border hover:bg-green-100 flex items-center justify-center text-text-secondary hover:text-green-700 font-bold">+</button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

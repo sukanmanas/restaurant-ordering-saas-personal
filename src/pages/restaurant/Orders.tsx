@@ -307,7 +307,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ isOpen, order, on
                   )}
                   {item.selected_addons && item.selected_addons.length > 0 && (
                     <p className="text-sm text-text-secondary">
-                      ท็อปปิ้ง: {item.selected_addons.map((a: any) => a.name).join(", ")}
+                      ท็อปปิ้ง: {item.selected_addons.map((a: any) => `${a.name}${a.quantity > 1 ? ` x${a.quantity}` : ""}`).join(", ")}
                     </p>
                   )}
                   {item.spicy_level && (
