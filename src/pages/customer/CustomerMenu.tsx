@@ -424,10 +424,10 @@ const CartModal: React.FC<CartModalProps> = ({ isOpen, cart, lang, onClose, onUp
                   <div className="flex-1">
                     <h4 className="font-semibold text-text">{getItemName(item, lang)}</h4>
                     {item.selectedSize && (
-                      <p className="text-sm text-text-secondary">{t(lang, "size")} {item.selectedSize.name}</p>
+                      <p className="text-sm text-text-secondary">{t(lang, "size")} {lang === "en" && item.selectedSize.name_en ? item.selectedSize.name_en : lang === "zh" && item.selectedSize.name_zh ? item.selectedSize.name_zh : item.selectedSize.name}</p>
                     )}
                     {item.selectedAddons.length > 0 && (
-                      <p className="text-sm text-text-secondary">{t(lang, "addons")} {item.selectedAddons.map((a) => a.name).join(", ")}</p>
+                      <p className="text-sm text-text-secondary">{t(lang, "addons")} {item.selectedAddons.map((a) => lang === "en" && a.name_en ? a.name_en : lang === "zh" && a.name_zh ? a.name_zh : a.name).join(", ")}</p>
                     )}
                     <p className="text-accent font-semibold mt-1">{formatCurrency(item.itemTotal)}</p>
                   </div>
@@ -522,7 +522,7 @@ const ItemCustomizationModal: React.FC<ItemCustomizationModalProps> = ({ isOpen,
                     selectedSize?.name === size.name ? "border-green-500 bg-green-50" : "border-border hover:border-green-300"
                   }`}
                 >
-                  <span className="font-medium text-text">{size.name}</span>
+                  <span className="font-medium text-text">{lang === "en" && size.name_en ? size.name_en : lang === "zh" && size.name_zh ? size.name_zh : size.name}</span>
                   <span className={`font-semibold ${selectedSize?.name === size.name ? "text-green-600" : "text-text-secondary"}`}>
                     +{formatCurrency(size.price)}
                   </span>
@@ -544,7 +544,7 @@ const ItemCustomizationModal: React.FC<ItemCustomizationModalProps> = ({ isOpen,
                     selectedAddons.find((a) => a.name === addon.name) ? "border-green-500 bg-green-50" : "border-border hover:border-green-300"
                   }`}
                 >
-                  <span className="font-medium text-text">{addon.name}</span>
+                  <span className="font-medium text-text">{lang === "en" && addon.name_en ? addon.name_en : lang === "zh" && addon.name_zh ? addon.name_zh : addon.name}</span>
                   <span className="text-accent font-semibold">+{formatCurrency(addon.price)}</span>
                 </button>
               ))}

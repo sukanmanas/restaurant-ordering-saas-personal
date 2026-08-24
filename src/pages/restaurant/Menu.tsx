@@ -343,8 +343,8 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
     addons: [] as { name: string; price: number }[],
   });
 
-  const [newSize, setNewSize] = useState({ name: "", price: "" });
-  const [newAddon, setNewAddon] = useState({ name: "", price: "" });
+  const [newSize, setNewSize] = useState({ name: "", name_en: "", name_zh: "", price: "" });
+  const [newAddon, setNewAddon] = useState({ name: "", name_en: "", name_zh: "", price: "" });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
 
@@ -451,10 +451,15 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
         ...formData,
         sizes: [
           ...formData.sizes,
-          { name: newSize.name, price: parseFloat(newSize.price) },
+          {
+            name: newSize.name,
+            name_en: newSize.name_en || undefined,
+            name_zh: newSize.name_zh || undefined,
+            price: parseFloat(newSize.price),
+          },
         ],
       });
-      setNewSize({ name: "", price: "" });
+      setNewSize({ name: "", name_en: "", name_zh: "", price: "" });
     }
   };
 
@@ -471,10 +476,15 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
         ...formData,
         addons: [
           ...formData.addons,
-          { name: newAddon.name, price: parseFloat(newAddon.price) },
+          {
+            name: newAddon.name,
+            name_en: newAddon.name_en || undefined,
+            name_zh: newAddon.name_zh || undefined,
+            price: parseFloat(newAddon.price),
+          },
         ],
       });
-      setNewAddon({ name: "", price: "" });
+      setNewAddon({ name: "", name_en: "", name_zh: "", price: "" });
     }
   };
 
@@ -628,91 +638,51 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
         </div>
 
         {/* Sizes */}
-        <div>
-          <label className="label mb-3">Sizes (Optional)</label>
-          <div className="space-y-2 mb-3">
+        <div className="border border-border rounded-lg p-4 space-y-3">
+          <label className="label">ขนาด (ไม่บังคับ)</label>
+          <div className="space-y-2">
             {formData.sizes.map((size, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between p-3 bg-bg-subtle rounded-lg"
-              >
-                <span className="text-text">
-                  {size.name} - {formatCurrency(size.price)}
+              <div key={index} className="flex items-center justify-between p-3 bg-bg-subtle rounded-lg">
+                <span className="text-text text-sm">
+                  {size.name}{size.name_en ? ` / ${size.name_en}` : ""}{size.name_zh ? ` / ${size.name_zh}` : ""} — {formatCurrency(size.price)}
                 </span>
-                <button
-                  type="button"
-                  onClick={() => removeSize(index)}
-                  className="text-error hover:bg-error/10 p-1 rounded"
-                >
+                <button type="button" onClick={() => removeSize(index)} className="text-error hover:bg-error/10 p-1 rounded">
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
             ))}
           </div>
-          <div className="flex gap-2">
-            <Input
-              placeholder="Size name"
-              value={newSize.name}
-              onChange={(e) => setNewSize({ ...newSize, name: e.target.value })}
-            />
-            <Input
-              placeholder="Price"
-              type="number"
-              step="0.01"
-              value={newSize.price}
-              onChange={(e) =>
-                setNewSize({ ...newSize, price: e.target.value })
-              }
-            />
-            <Button type="button" onClick={addSize} variant="outline">
-              Add
-            </Button>
+          <div className="grid grid-cols-2 gap-2">
+            <Input placeholder="ชื่อ (ไทย) *" value={newSize.name} onChange={(e) => setNewSize({ ...newSize, name: e.target.value })} />
+            <Input placeholder="Price (฿)" type="number" step="0.01" value={newSize.price} onChange={(e) => setNewSize({ ...newSize, price: e.target.value })} />
+            <Input placeholder="Name (English)" value={newSize.name_en} onChange={(e) => setNewSize({ ...newSize, name_en: e.target.value })} />
+            <Input placeholder="名称 (中文)" value={newSize.name_zh} onChange={(e) => setNewSize({ ...newSize, name_zh: e.target.value })} />
           </div>
+          <Button type="button" onClick={addSize} variant="outline" fullWidth>+ เพิ่มขนาด</Button>
         </div>
 
         {/* Add-ons */}
-        <div>
-          <label className="label mb-3">Add-ons (Optional)</label>
-          <div className="space-y-2 mb-3">
+        <div className="border border-border rounded-lg p-4 space-y-3">
+          <label className="label">ท็อปปิ้ง / ตัวเลือกเสริม (ไม่บังคับ)</label>
+          <div className="space-y-2">
             {formData.addons.map((addon, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between p-3 bg-bg-subtle rounded-lg"
-              >
-                <span className="text-text">
-                  {addon.name} - +{formatCurrency(addon.price)}
+              <div key={index} className="flex items-center justify-between p-3 bg-bg-subtle rounded-lg">
+                <span className="text-text text-sm">
+                  {addon.name}{addon.name_en ? ` / ${addon.name_en}` : ""}{addon.name_zh ? ` / ${addon.name_zh}` : ""} — +{formatCurrency(addon.price)}
                 </span>
-                <button
-                  type="button"
-                  onClick={() => removeAddon(index)}
-                  className="text-error hover:bg-error/10 p-1 rounded"
-                >
+                <button type="button" onClick={() => removeAddon(index)} className="text-error hover:bg-error/10 p-1 rounded">
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
             ))}
           </div>
-          <div className="flex gap-2">
-            <Input
-              placeholder="Add-on name"
-              value={newAddon.name}
-              onChange={(e) =>
-                setNewAddon({ ...newAddon, name: e.target.value })
-              }
-            />
-            <Input
-              placeholder="Price"
-              type="number"
-              step="0.01"
-              value={newAddon.price}
-              onChange={(e) =>
-                setNewAddon({ ...newAddon, price: e.target.value })
-              }
-            />
-            <Button type="button" onClick={addAddon} variant="outline">
-              Add
-            </Button>
+          <div className="grid grid-cols-2 gap-2">
+            <Input placeholder="ชื่อ (ไทย) *" value={newAddon.name} onChange={(e) => setNewAddon({ ...newAddon, name: e.target.value })} />
+            <Input placeholder="Price (฿)" type="number" step="0.01" value={newAddon.price} onChange={(e) => setNewAddon({ ...newAddon, price: e.target.value })} />
+            <Input placeholder="Name (English)" value={newAddon.name_en} onChange={(e) => setNewAddon({ ...newAddon, name_en: e.target.value })} />
+            <Input placeholder="名称 (中文)" value={newAddon.name_zh} onChange={(e) => setNewAddon({ ...newAddon, name_zh: e.target.value })} />
           </div>
+          <Button type="button" onClick={addAddon} variant="outline" fullWidth>+ เพิ่มท็อปปิ้ง</Button>
         </div>
 
         {/* Availability */}

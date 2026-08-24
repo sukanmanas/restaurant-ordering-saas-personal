@@ -75,8 +75,8 @@ export interface MenuItem {
   category?: string;
   image_url?: string;
   is_available: boolean;
-  sizes?: { name: string; price: number }[];
-  addons?: { name: string; price: number }[];
+  sizes?: { name: string; name_en?: string; name_zh?: string; price: number }[];
+  addons?: { name: string; name_en?: string; name_zh?: string; price: number }[];
   created_at: string;
 }
 
@@ -120,8 +120,8 @@ export interface OrderItem {
   name: string;
   quantity: number;
   base_price: number;
-  selected_size?: { name: string; price: number };
-  selected_addons?: { name: string; price: number }[];
+  selected_size?: { name: string; name_en?: string; name_zh?: string; price: number };
+  selected_addons?: { name: string; name_en?: string; name_zh?: string; price: number }[];
   item_total: number;
   special_instructions?: string;
 }
