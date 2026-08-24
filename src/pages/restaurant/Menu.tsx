@@ -373,7 +373,7 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
         base_price: copyFrom ? copyFrom.base_price.toString() : "",
         image_url: "",
         is_available: true,
-        sizes: copyFrom?.sizes || [],
+        sizes: copyFrom?.sizes || [{ name: "ปกติ", price: 0 }],
         addons: copyFrom?.addons || [],
       });
     }
