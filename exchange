@@ -62,3 +62,25 @@ ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS name_zh TEXT;
 ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS description_en TEXT;
 ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS description_zh TEXT;
 ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS category TEXT;
+
+
+-- =====================================================
+-- STEP 5: Create storage bucket for menu images
+-- Run this after Step 4
+-- Go to Supabase → Storage → Create bucket
+--   Name: menu-images
+--   Public: ON
+-- Then run this to allow public uploads:
+-- =====================================================
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('menu-images', 'menu-images', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+CREATE POLICY "Public can view menu images" ON storage.objects
+  FOR SELECT USING (bucket_id = 'menu-images');
+
+CREATE POLICY "Anon can upload menu images" ON storage.objects
+  FOR INSERT WITH CHECK (bucket_id = 'menu-images');
+
+CREATE POLICY "Anon can delete menu images" ON storage.objects
+  FOR DELETE USING (bucket_id = 'menu-images');
