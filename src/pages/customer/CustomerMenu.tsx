@@ -31,6 +31,7 @@ interface CartItem extends MenuItem {
   selectedSize?: { name: string; price: number };
   selectedAddons: { name: string; price: number }[];
   itemTotal: number;
+  specialInstructions?: string;
 }
 
 const LANGUAGES: { code: Language; label: string }[] = [
@@ -117,18 +118,19 @@ const CustomerMenu: React.FC = () => {
     return matchesSearch && matchesCategory && item.is_available;
   });
 
-  const addToCart = (item: MenuItem, selectedSize?: any, selectedAddons: any[] = []) => {
+  const addToCart = (item: MenuItem, selectedSize?: any, selectedAddons: any[] = [], specialInstructions?: string) => {
     const basePrice = item.base_price + (selectedSize ? selectedSize.price : 0);
     const addonsTotal = selectedAddons.reduce((sum, addon) => sum + addon.price, 0);
     const itemTotal = basePrice + addonsTotal;
 
-    const cartItem: CartItem = { ...item, quantity: 1, selectedSize, selectedAddons, itemTotal };
+    const cartItem: CartItem = { ...item, quantity: 1, selectedSize, selectedAddons, itemTotal, specialInstructions: specialInstructions || undefined };
 
     const existingIndex = cart.findIndex(
       (ci) =>
         ci.id === item.id &&
         ci.selectedSize?.name === selectedSize?.name &&
-        JSON.stringify(ci.selectedAddons) === JSON.stringify(selectedAddons)
+        JSON.stringify(ci.selectedAddons) === JSON.stringify(selectedAddons) &&
+        ci.specialInstructions === (specialInstructions || undefined)
     );
 
     if (existingIndex >= 0) {
@@ -429,6 +431,9 @@ const CartModal: React.FC<CartModalProps> = ({ isOpen, cart, lang, onClose, onUp
                     {item.selectedAddons.length > 0 && (
                       <p className="text-sm text-text-secondary">{t(lang, "addons")} {item.selectedAddons.map((a) => lang === "en" && a.name_en ? a.name_en : lang === "zh" && a.name_zh ? a.name_zh : a.name).join(", ")}</p>
                     )}
+                    {item.specialInstructions && (
+                      <p className="text-sm text-orange-500 italic">"{item.specialInstructions}"</p>
+                    )}
                     <p className="text-accent font-semibold mt-1">{formatCurrency(item.itemTotal)}</p>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -466,7 +471,7 @@ interface ItemCustomizationModalProps {
   item: MenuItem | null;
   lang: Language;
   onClose: () => void;
-  onAdd: (item: MenuItem, selectedSize?: any, selectedAddons?: any[]) => void;
+  onAdd: (item: MenuItem, selectedSize?: any, selectedAddons?: any[], specialInstructions?: string) => void;
   getItemName: (item: MenuItem, lang: Language) => string;
   getItemDesc: (item: MenuItem, lang: Language) => string | undefined;
 }
@@ -474,12 +479,14 @@ interface ItemCustomizationModalProps {
 const ItemCustomizationModal: React.FC<ItemCustomizationModalProps> = ({ isOpen, item, lang, onClose, onAdd, getItemName, getItemDesc }) => {
   const [selectedSize, setSelectedSize] = useState<any>(null);
   const [selectedAddons, setSelectedAddons] = useState<any[]>([]);
+  const [specialInstructions, setSpecialInstructions] = useState("");
 
   const sortedSizes = item?.sizes ? [...item.sizes].sort((a, b) => a.price - b.price) : [];
 
   useEffect(() => {
     if (sortedSizes.length > 0) setSelectedSize(sortedSizes[0]);
     setSelectedAddons([]);
+    setSpecialInstructions("");
   }, [item]);
 
   if (!item) return null;
@@ -552,12 +559,24 @@ const ItemCustomizationModal: React.FC<ItemCustomizationModalProps> = ({ isOpen,
           </div>
         )}
 
+        {/* Special instructions */}
+        <div>
+          <label className="block text-sm font-semibold text-text mb-2">{t(lang, "specialInstructions")}</label>
+          <textarea
+            value={specialInstructions}
+            onChange={(e) => setSpecialInstructions(e.target.value)}
+            placeholder={t(lang, "specialInstructionsPlaceholder")}
+            rows={2}
+            className="w-full px-3 py-2 border border-border rounded-lg text-sm text-text placeholder-text-secondary focus:outline-none focus:ring-2 focus:ring-accent resize-none"
+          />
+        </div>
+
         <div className="border-t border-border pt-4">
           <div className="flex justify-between text-xl font-bold text-text mb-4">
             <span>{t(lang, "total")}</span>
             <span>{formatCurrency(calculateTotal())}</span>
           </div>
-          <Button onClick={() => onAdd(item, selectedSize, selectedAddons)} fullWidth size="lg">
+          <Button onClick={() => onAdd(item, selectedSize, selectedAddons, specialInstructions)} fullWidth size="lg">
             {t(lang, "addToCart")}
           </Button>
         </div>
@@ -617,6 +636,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, cart, restaurantI
         selected_size: item.selectedSize,
         selected_addons: item.selectedAddons,
         item_total: item.itemTotal,
+        special_instructions: item.specialInstructions || undefined,
       })),
       subtotal,
       tax,

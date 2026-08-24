@@ -310,6 +310,9 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ isOpen, order, on
                       ท็อปปิ้ง: {item.selected_addons.map((a: any) => a.name).join(", ")}
                     </p>
                   )}
+                  {item.special_instructions && (
+                    <p className="text-sm text-orange-500 italic">หมายเหตุ: {item.special_instructions}</p>
+                  )}
                 </div>
                 <p className="font-semibold text-text">{formatCurrency(item.item_total || item.subtotal || 0)}</p>
               </div>
