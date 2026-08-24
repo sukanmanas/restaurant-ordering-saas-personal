@@ -386,6 +386,7 @@ const MenuItemModal: React.FC<MenuItemModalProps> = ({
       description: formData.description || undefined,
       description_en: formData.description_en || undefined,
       description_zh: formData.description_zh || undefined,
+      category: formData.category || undefined,
       base_price: parseFloat(formData.base_price),
       image_url: formData.image_url || undefined,
       is_available: formData.is_available,
